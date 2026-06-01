@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    .profile-bar { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+    .profile-bar img { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #e2e8f0; }
+    .profile-bar .no-photo { width:60px; height:60px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#94a3b8; flex-shrink:0; }
+    .profile-bar .profile-info h1 { margin:0; font-size:1.4rem; }
+    .profile-bar .profile-info p  { margin:2px 0 0; }
+
+    /* Top-right nav */
+    .top-nav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .nav-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 18px; border-radius:10px; font-size:0.85rem; font-weight:600;
+      cursor:pointer; border:1px solid rgba(255,255,255,0.12);
+      background:rgba(37,99,235,0.15); color:#93c5fd;
+      transition:background 0.18s, border-color 0.18s;
+      text-decoration:none;
+    }
+    .nav-btn:hover { background:rgba(37,99,235,0.3); border-color:rgba(37,99,235,0.5); }
+    .nav-btn.active { background:rgba(37,99,235,0.35); border-color:#2563eb; color:#bfdbfe; }
+
+    /* ── Grade table ── */
+    .grade-table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+    .grade-table th {
+      text-align:left;
+      padding:9px 10px;
+      border-bottom:2px solid rgba(255,255,255,0.1);
+      color:#94a3b8;
+      font-size:0.75rem;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .grade-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+
+    /* Student group separator */
+    .grade-table tr.student-first-row td { border-top:2px solid rgba(37,99,235,0.25); padding-top:12px; }
+
+    .grade-table td.student-id { font-weight:700; color:#60a5fa; white-space:nowrap; }
+    .grade-table td.student-name { font-weight:600; color:#f1f5f9; }
+
+    /* ── Search / filter bar ── */
+    .grade-filter-bar {
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      margin-bottom:14px;
+    }
+    .grade-filter-bar input,
+    .grade-filter-bar select {
+      background:rgba(11,18,32,0.8);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:10px;
+      color:#f8fafc;
+      padding:8px 12px;
+      font-size:0.85rem;
+      outline:none;
+      transition:border-color 0.2s, box-shadow 0.2s;
+    }
+    .grade-filter-bar input { flex:1; min-width:180px; }
+    .grade-filter-bar select { min-width:150px; }
+    .grade-filter-bar input:focus,
+    .grade-filter-bar select:focus {
+      border-color:#2563eb;
+      box-shadow:0 0 0 3px rgba(37,99,235,0.18);
+    }
+    .grade-filter-bar input::placeholder { color:#4b5563; }
+    .grade-count {
+      font-size:0.78rem; color:#64748b; white-space:nowrap; margin-left:auto;
+    }
+    .grade-table td.subject-cell { color:#fbbf24; font-weight:600; }
+    .grade-table td.period-cell { text-align:center; color:#cbd5e1; }
+    .grade-table td.period-cell.has-value { color:#f8fafc; font-weight:700; }
+    .grade-table td.exam-cell  { text-align:center; color:#a78bfa; font-weight:600; }
+    .grade-table td.exam1-cell { text-align:center; color:#f472b6; font-weight:700; }
+    .grade-table td.exam2-cell { text-align:center; color:#a78bfa; font-weight:700; }
+
+    /* Grade colour bands */
+    .grade-red   { color:#f87171 !important; font-weight:700; }  /* 60-69 */
+    .grade-blue  { color:#60a5fa !important; font-weight:700; }  /* 70-89 */
+    .grade-white { color:#f8fafc !important; font-weight:700; }  /* other */
+    .grade-green { color:#4ade80 !important; font-weight:700; }  /* 90-100 */
+    .grade-table td.blank { color:#475569; }
+
+    /* Subject tag pills */
+    .subject-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .subject-tag {
+      display:inline-block; padding:3px 10px; border-radius:20px;
+      font-size:0.75rem; font-weight:700; letter-spacing:0.04em;
+      background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.3); color:#93c5fd;
+    }
+
+    /* Grade section header */
+    .grades-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
+    .grades-header h2 { margin:0; }
+    .access-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3);
+      border-radius:20px; padding:3px 12px; font-size:0.72rem;
+      font-weight:700; color:#fbbf24; letter-spacing:0.06em;
+    }
+
+    .no-grades-msg {
+      display:flex; align-items:center; gap:10px;
+      background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2);
+      border-radius:10px; padding:14px 16px; color:#fca5a5; font-size:0.88rem;
+    }
+
+    /* Students section table */
+    table { width:100%; border-collapse:collapse; }
+    th { text-align:left; border-bottom:2px solid #e2e8f0; padding:8px; }
+    td { padding:8px; border-bottom:1px solid #f1f5f9; }
+
+    /* Scrollable grade table wrapper on small screens */
+    .table-scroll { overflow-x:auto; }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+      <div class="profile-bar">
+        <div id="teacherPhotoWrap"><div class="no-photo">&#128100;</div></div>
+        <div class="profile-info">
+          <h1 id="teacherGreeting">Teacher Dashboard</h1>
+          <p class="muted" id="teacherMeta">Loading your info...</p>
+        </div>
+      </div>
+      <div class="top-nav">
+        <a href="grades.html" class="nav-btn">📋 Grades Input</a>
+        <span style="width:14px;"></span>
+        <button class="nav-btn" onclick="refreshDashboard()" id="refreshBtn" style="background:rgba(34,197,94,0.13);border-color:rgba(34,197,94,0.3);color:#86efac;">🔄 Refresh</button>
+        <button class="btn btn-secondary" onclick="logoutUser()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Teacher Quote Card -->
+    <div id="quoteCard" style="
+      display:none;
+      position:relative;
+      margin-bottom:18px;
+      padding:14px 18px 14px 22px;
+      border-radius:12px;
+      background: linear-gradient(135deg, rgba(239,68,68,0.10) 0%, rgba(190,18,60,0.07) 100%);
+      border:1px solid rgba(239,68,68,0.25);
+      border-left:4px solid #ef4444;
+      box-shadow: 0 2px 12px rgba(239,68,68,0.08);
+    ">
+      <span style="position:absolute;top:10px;left:16px;font-size:1.5rem;opacity:0.25;line-height:1;color:#f87171;">&ldquo;</span>
+      <p id="teacherQuote" style="
+        margin:0 0 0 18px;
+        font-size:0.875rem;
+        font-style:italic;
+        color:#fca5a5;
+        line-height:1.65;
+        letter-spacing:0.01em;
+      "></p>
+      <span style="position:absolute;bottom:8px;right:16px;font-size:1.5rem;opacity:0.25;line-height:1;color:#f87171;">&rdquo;</span>
+    </div>
+
+    <section class="panel">
+      <h2>My Assigned Classes &amp; Subjects</h2>
+      <p id="assignedInfo" class="muted">Loading...</p>
+      <div id="subjectTagsWrap" class="subject-tags"></div>
+    </section>
+
+    <section class="panel">
+      <div class="grades-header">
+        <h2>Grades</h2>
+        <span class="access-badge" id="gradeAccessBadge">🔒 Subject-Restricted View</span>
+      </div>
+      <p class="muted" id="gradesSubInfo" style="margin:0 0 14px; font-size:0.82rem;"></p>
+
+      <!-- Search / Filter bar -->
+      <div class="grade-filter-bar" id="gradeFilterBar" style="display:none;">
+        <input type="text" id="gradeSearch" placeholder="Search by name or student ID..." />
+        <select id="gradeClassFilter"><option value="">All Classes</option></select>
+        <select id="gradeSubjectFilter"><option value="">All Subjects</option></select>
+        <span class="grade-count" id="gradeCount"></span>
+      </div>
+
+      <div class="table-scroll" id="gradeList"><p class="muted">Loading grades...</p></div>
+      <div id="gradeFooter" style="display:none;text-align:center;padding:12px 0;"></div>
+    </section>
+
+    <section class="panel">
+      <h2>My Students</h2>
+      <p id="teacherMessage" class="muted"></p>
+      <div class="search-wrap" style="margin-bottom:12px;">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="myStudentSearch" placeholder="Search by name or ID…" oninput="filterMyStudents()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:7px 12px 7px 32px;color:#e2e8f0;font-size:0.85rem;width:100%;box-sizing:border-box;outline:none;" />
+      </div>
+      <div style="margin-bottom:6px;"><span id="myStudentCountLabel" style="font-size:0.78rem;color:#64748b;"></span></div>
+      <div id="studentList"><p class="muted">Loading students...</p></div>
+      <div id="myStudentFooter" style="display:none;text-align:center;padding:12px 0;"></div>
+    </section>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    guardRoute('teacher');
+
+    // ── Google Drive photo fix ─────────────────────────────────────────────
+    function driveImgUrl(url) {
+      if (!url) return url;
+      if (url.indexOf('drive.google.com/thumbnail') !== -1 ||
+          url.indexOf('uc?') !== -1 || url.indexOf('uc&') !== -1) return url;
+      var m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+              url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w200';
+      return url;
+    }
+
+    // ── Teacher quotes (name placeholder = {name}) ─────────────────────────
+    var TEACHER_QUOTES = [
+      "{name}, the mediocre teacher tells. The good teacher explains. The superior teacher demonstrates. The great teacher inspires — and that is you.",
+      "{name}, teaching is the greatest act of optimism. Never stop believing.",
+      "{name}, a good teacher is like a candle — it consumes itself to light the way for others.",
+      "{name}, education is not the filling of a pail, but the lighting of a fire. Keep lighting it.",
+      "{name}, one book, one pen, one child, and one teacher can change the world.",
+      "{name}, what the teacher is, is more important than what they teach.",
+      "{name}, students don't care how much you know until they know how much you care.",
+      "{name}, the best teachers show you where to look, but don't tell you what to see.",
+      "{name}, teaching is a very noble profession that shapes the character and future of every child.",
+      "{name}, you are not just teaching a subject — you are shaping a future.",
+      "{name}, every child who walks through your door carries a dream. You help them believe in it.",
+      "{name}, teaching is the one profession that creates all other professions.",
+      "{name}, good teachers are priceless — they inspire, they entertain, and students learn without even knowing it.",
+      "{name}, education is the key to success in life, and teachers make a lasting impact.",
+      "{name}, a gifted teacher is prepared not just for today's child, but for every child's future.",
+      "{name}, the kids you impact today may be tomorrow's leaders.",
+      "{name}, inside your classroom, someone is changing the world.",
+      "{name}, it is not what you teach — it is what your students remember that truly matters.",
+      "{name}, I cannot teach anybody anything; I can only make them think — and that is your greatest gift.",
+      "{name}, education breeds confidence, confidence breeds hope, and hope breeds peace. You are the beginning of all of it."
+    ];
+
+    function getQuote(fullName) {
+      var idx = Math.floor(Math.random() * TEACHER_QUOTES.length);
+      // Replace {name} with a highlighted span in gold so the name stands out
+      var raw = TEACHER_QUOTES[idx].replace('{name}', '\x00NAME\x00');
+      var parts = raw.split('\x00NAME\x00');
+      return parts[0] +
+        '<span style="color:#fbbf24;font-weight:700;font-style:normal;">' + fullName + '</span>' +
+        (parts[1] || '');
+    }
+
+    function getFullName(fullName) {
+      return (fullName || 'Teacher').trim();
+    }
+
+    // ── Refresh button ─────────────────────────────────────────────────────
+    var _currentUsername = '';
+    function refreshDashboard() {
+      var btn = document.getElementById('refreshBtn');
+      if (btn) { btn.textContent = '⏳ Refreshing…'; btn.disabled = true; }
+      loadDashboard(_currentUsername, function() {
+        if (btn) { btn.textContent = '🔄 Refresh'; btn.disabled = false; }
+      });
+    }
+
+    // ── Main load function (extracted so refresh can call it) ──────────────
+    var HIDDEN_COLS  = ['teacher', 'average', 'semester', 'sem1 avg', 'sem2 avg', 'yearly avg'];
+    var PERIOD_REGEX = /^period\s*(\d+)$/i;
+    var EXAM_REGEX   = /^exam(\d+)$/i;
+
+    var _finalCols  = [];
+    var _allRows    = [];
+    var _headerHtml = '';
+
+    async function loadDashboard(username, onDone) {
+      try {
+        var result = await apiRequest('getTeacherData', { username: username });
+        if (!result || !result.ok) {
+          document.getElementById('teacherMessage').textContent =
+            result && result.message ? result.message : 'Could not load dashboard.';
+          if (onDone) onDone();
+          return;
+        }
+
+        var t = result.teacher || {};
+
+        // Photo (Google Drive fix)
+        if (t.PhotoLink) {
+          document.getElementById('teacherPhotoWrap').innerHTML =
+            '<img src="' + driveImgUrl(t.PhotoLink) + '" alt="photo" onerror="this.parentNode.innerHTML=\'<div class=no-photo>&#128100;</div>\'" />';
+        }
+
+        document.getElementById('teacherGreeting').textContent = 'Welcome, ' + (t.FullName || username);
+        document.getElementById('teacherMeta').textContent = 'Role: Teacher  |  @' + username;
+
+        // Quote
+        var fullName = getFullName(t.FullName || username);
+        document.getElementById('teacherQuote').innerHTML = getQuote(fullName);
+        document.getElementById('quoteCard').style.display = 'block';
+
+        var assignedSubjects = String(t.AssignedSubjects || 'ALL').trim();
+        var assignedClasses  = String(t.AssignedClasses  || 'ALL').trim();
+        var isAllSubjects    = assignedSubjects.toUpperCase() === 'ALL';
+
+        document.getElementById('assignedInfo').innerHTML =
+          '<strong>Classes:</strong> ' + assignedClasses +
+          ' &nbsp;|&nbsp; <strong>Subjects:</strong> ' + assignedSubjects;
+
+        if (!isAllSubjects) {
+          var tags = assignedSubjects.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+          document.getElementById('subjectTagsWrap').innerHTML =
+            tags.map(function(s){ return '<span class="subject-tag">' + s + '</span>'; }).join('');
+        } else {
+          document.getElementById('subjectTagsWrap').innerHTML =
+            '<span class="subject-tag" style="background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3);color:#86efac;">All Subjects</span>';
+        }
+
+        // Students table — sorted by Class, show 5 with search
+        _allMyStudents = (result.students || []).slice().sort(function(a,b){
+          return String(a.Class||'').localeCompare(String(b.Class||''));
+        });
+        _myStudentShowAll = false;
+        renderMyStudents(_allMyStudents, false);
+
+        // Access badge
+        if (isAllSubjects) {
+          document.getElementById('gradeAccessBadge').textContent = 'Full Access';
+          document.getElementById('gradeAccessBadge').style.cssText =
+            'background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#86efac;' +
+            'display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 12px;font-size:0.72rem;font-weight:700;letter-spacing:0.06em;';
+          document.getElementById('gradesSubInfo').textContent = 'Showing all grade records.';
+        } else {
+          var subjectNames = assignedSubjects.split(',').map(function(s){ return s.trim(); }).join(', ');
+          document.getElementById('gradesSubInfo').textContent =
+            'Showing only grades for your subject(s): ' + subjectNames + '. Grades from other subjects are hidden.';
+        }
+
+        // Build grade table
+        var grades = result.grades || [];
+        if (!grades.length) {
+          var subjectLabel = isAllSubjects ? 'any subject' : assignedSubjects;
+          document.getElementById('gradeList').innerHTML =
+            '<div class="no-grades-msg"><span style="font-size:1.4rem">📭</span>' +
+            '<span>No grade records found for <strong>' + subjectLabel + '</strong>.</span></div>';
+          if (onDone) onDone();
+          return;
+        }
+
+        // Use gradeHeaders from API for exact sheet column order.
+        // Apps Script object keys are unreliable for ordering.
+        var sheetHeaders = result.gradeHeaders || Object.keys(grades[0]);
+        var LEAD_COLS   = ['StudentID','StudentName','Class','Subject'];
+        var leadVisible = LEAD_COLS.filter(function(k){ return sheetHeaders.indexOf(k) !== -1; });
+        var gradeCols   = [];
+        sheetHeaders.forEach(function(k){
+          var lower = k.toLowerCase().trim();
+          if (HIDDEN_COLS.indexOf(lower) !== -1) return;
+          if (LEAD_COLS.map(function(x){return x.toLowerCase();}).indexOf(lower) !== -1) return;
+          gradeCols.push(k);
+        });
+        _finalCols = leadVisible.concat(gradeCols);
+
+        _allRows = grades.map(function(g){
+          return {
+            sid:     String(g.StudentID || g['Student ID'] || '').trim().toLowerCase(),
+            name:    String(g.StudentName || g['Student Name'] || '').trim().toLowerCase(),
+            subject: String(g.Subject || '').trim().toLowerCase(),
+            data:    g
+          };
+        });
+
+        // Repopulate subject dropdown (clear first for re-renders)
+        var classSelect = document.getElementById('gradeClassFilter');
+        classSelect.innerHTML = '<option value="">All Classes</option>';
+        var classSet = {};
+        _allRows.forEach(function(r){ if (r.data && r.data.Class) classSet[r.data.Class.trim()] = true; });
+        Object.keys(classSet).sort().forEach(function(c){
+          var opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          classSelect.appendChild(opt);
+        });
+
+        var subjectSelect = document.getElementById('gradeSubjectFilter');
+        subjectSelect.innerHTML = '<option value="">All Subjects</option>';
+        var subjectSet = {};
+        _allRows.forEach(function(r){ if (r.subject) subjectSet[r.subject] = true; });
+        Object.keys(subjectSet).sort().forEach(function(s){
+          var opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+          subjectSelect.appendChild(opt);
+        });
+
+        _headerHtml = '<tr>' + _finalCols.map(function(k){
+          var lk = k.toLowerCase().trim();
+          var mp = PERIOD_REGEX.exec(lk);
+          var me = EXAM_REGEX.exec(lk);
+          var label = mp ? 'Period ' + mp[1] : (me ? 'Exam ' + me[1] : k);
+          return '<th>' + label + '</th>';
+        }).join('') + '</tr>';
+
+        document.getElementById('gradeFilterBar').style.display = 'flex';
+        renderGrades('', '', '');
+
+        // Wire up live filters (only on first load)
+        if (!document.getElementById('gradeSearch')._wired) {
+          document.getElementById('gradeSearch')._wired = true;
+          function getFilters() {
+            return {
+              q:   document.getElementById('gradeSearch').value.trim().toLowerCase(),
+              cls: document.getElementById('gradeClassFilter').value,
+              sub: document.getElementById('gradeSubjectFilter').value
+            };
+          }
+          document.getElementById('gradeSearch').addEventListener('input', function(){
+            var f = getFilters(); renderGrades(f.q, f.cls, f.sub);
+          });
+          document.getElementById('gradeClassFilter').addEventListener('change', function(){
+            var f = getFilters(); renderGrades(f.q, f.cls, f.sub);
+          });
+          document.getElementById('gradeSubjectFilter').addEventListener('change', function(){
+            var f = getFilters(); renderGrades(f.q, f.cls, f.sub);
+          });
+        }
+
+      } catch (err) {
+        document.getElementById('teacherMessage').textContent = 'Error loading dashboard: ' + err.message;
+      }
+      if (onDone) onDone();
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      var session = getSession();
+      _currentUsername = session ? session.username : '';
+      loadDashboard(_currentUsername, null);
+    });
+
+    function gradeClass(val) {
+      var n = parseFloat(val);
+      if (isNaN(n)) return '';
+      if (n >= 90 && n <= 100) return 'grade-green';
+      if (n >= 70 && n <=  89) return 'grade-blue';
+      if (n >= 60 && n <=  69) return 'grade-red';
+      return 'grade-white';  // 80–89 and any other numeric score
+    }
+
+    var _gradeShowAll = false;
+    var GRADE_PAGE = 5;
+
+    function buildGradeRows(rows) {
+      var seenSids = {};
+      return rows.map(function (r) {
+        var g       = r.data;
+        var isFirst = !seenSids[r.sid];
+        seenSids[r.sid] = true;
+        var rowHtml = '<tr class="' + (isFirst ? 'student-first-row' : 'student-extra-row') + '">';
+        _finalCols.forEach(function (k) {
+          var lower = k.toLowerCase().trim();
+          var val   = String(g[k] !== undefined ? g[k] : '').trim();
+          if (lower === 'studentid' || lower === 'student id') {
+            rowHtml += '<td class="student-id">' + (val || '—') + '</td>'; return;
+          }
+          if (lower === 'studentname' || lower === 'student name') {
+            rowHtml += '<td class="student-name">' + (val || '—') + '</td>'; return;
+          }
+          if (lower === 'subject') {
+            rowHtml += '<td class="subject-cell">' + (val || '—') + '</td>'; return;
+          }
+          if (EXAM_REGEX.test(lower)) {
+            var examN = parseInt(lower.replace(/^exam/i,''),10);
+            var cls   = examN === 1 ? 'exam1-cell' : 'exam2-cell';
+            rowHtml += val !== ''
+              ? '<td class="' + cls + '"><span class="' + gradeClass(val) + '">' + val + '</span></td>'
+              : '<td class="' + cls + '"><span class="blank">—</span></td>';
+            return;
+          }
+          if (PERIOD_REGEX.test(lower)) {
+            rowHtml += val !== ''
+              ? '<td class="period-cell has-value"><span class="' + gradeClass(val) + '">' + val + '</span></td>'
+              : '<td class="period-cell"><span class="blank">—</span></td>';
+            return;
+          }
+          rowHtml += '<td>' + (val !== '' ? val : '<span class="blank">—</span>') + '</td>';
+        });
+        rowHtml += '</tr>';
+        return rowHtml;
+      }).join('');
+    }
+
+    function renderGrades(searchTerm, classFilter, subjectFilter) {
+      _gradeShowAll = false;
+      var filtered = _allRows.filter(function (r) {
+        var matchSearch  = !searchTerm   || r.sid.indexOf(searchTerm) !== -1 || r.name.indexOf(searchTerm) !== -1;
+        var matchClass   = !classFilter  || String(r.data.Class || '').trim() === classFilter;
+        var matchSubject = !subjectFilter || r.subject === subjectFilter;
+        return matchSearch && matchClass && matchSubject;
+      });
+
+      if (!filtered.length) {
+        document.getElementById('gradeList').innerHTML =
+          '<div class="no-grades-msg"><span style="font-size:1.4rem">🔍</span>' +
+          '<span>No results match your search.</span></div>';
+        document.getElementById('gradeCount').textContent = '0 rows';
+        var gf = document.getElementById('gradeFooter'); if (gf) gf.style.display = 'none';
+        return;
+      }
+
+      var isFiltering = searchTerm || classFilter || subjectFilter;
+      var visible = (isFiltering || _gradeShowAll) ? filtered : filtered.slice(0, GRADE_PAGE);
+
+      document.getElementById('gradeCount').textContent = visible.length + ' of ' + filtered.length + ' row' + (filtered.length !== 1 ? 's' : '');
+      document.getElementById('gradeList').innerHTML =
+        '<table class="grade-table"><thead>' + _headerHtml + '</thead><tbody>' + buildGradeRows(visible) + '</tbody></table>';
+
+      var gf = document.getElementById('gradeFooter');
+      if (gf) {
+        var remaining = filtered.length - visible.length;
+        if (!isFiltering && remaining > 0) {
+          gf.innerHTML = '<button class="load-more-btn" onclick="showAllGrades()">Show all ' + filtered.length + ' rows (' + remaining + ' more)</button>';
+          gf.style.display = 'block';
+        } else {
+          gf.style.display = 'none';
+        }
+      }
+    }
+
+    window.showAllGrades = function() {
+      _gradeShowAll = true;
+      var f = getFiltersTeacher();
+      renderGradesAll(f.q, f.cls, f.sub);
+    };
+
+    function renderGradesAll(searchTerm, classFilter, subjectFilter) {
+      var filtered = _allRows.filter(function (r) {
+        var matchSearch  = !searchTerm   || r.sid.indexOf(searchTerm) !== -1 || r.name.indexOf(searchTerm) !== -1;
+        var matchClass   = !classFilter  || String(r.data.Class || '').trim() === classFilter;
+        var matchSubject = !subjectFilter || r.subject === subjectFilter;
+        return matchSearch && matchClass && matchSubject;
+      });
+      document.getElementById('gradeCount').textContent = filtered.length + ' row' + (filtered.length !== 1 ? 's' : '');
+      document.getElementById('gradeList').innerHTML =
+        '<table class="grade-table"><thead>' + _headerHtml + '</thead><tbody>' + buildGradeRows(filtered) + '</tbody></table>';
+      var gf = document.getElementById('gradeFooter'); if (gf) gf.style.display = 'none';
+    }
+
+    function getFiltersTeacher() {
+      return {
+        q:   document.getElementById('gradeSearch').value.trim().toLowerCase(),
+        cls: document.getElementById('gradeClassFilter').value,
+        sub: document.getElementById('gradeSubjectFilter').value
+      };
+    }
+
+    // ── My Students helpers ────────────────────────────────────────────────
+    var _allMyStudents = [];
+    var _myStudentShowAll = false;
+    var MY_STUDENT_PAGE = 5;
+
+    function renderMyStudents(students, showAll) {
+      var visible = (showAll || _myStudentShowAll) ? students : students.slice(0, MY_STUDENT_PAGE);
+      var countEl = document.getElementById('myStudentCountLabel');
+      var footerEl = document.getElementById('myStudentFooter');
+
+      if (!students.length) {
+        document.getElementById('studentList').innerHTML = '<p class="muted">No students found for your assigned classes.</p>';
+        if (countEl) countEl.textContent = '';
+        if (footerEl) footerEl.style.display = 'none';
+        return;
+      }
+
+      document.getElementById('studentList').innerHTML =
+        '<table><thead><tr><th>Student ID</th><th>Full Name</th><th>Gender</th><th>Class</th><th>Academic Year</th></tr></thead><tbody>' +
+        visible.map(function(s){
+          return '<tr><td>'+(s.StudentID||'')+'</td><td>'+(s.FullName||'')+'</td><td>'+
+            (s.Gender||'')+'</td><td>'+(s.Class||'')+'</td><td>'+(s.AcademicYear||'')+'</td></tr>';
+        }).join('') + '</tbody></table>';
+
+      if (countEl) {
+        countEl.textContent = visible.length < students.length
+          ? 'Showing ' + visible.length + ' of ' + students.length + ' students'
+          : 'All ' + students.length + ' student' + (students.length !== 1 ? 's' : '');
+      }
+      if (footerEl) {
+        var rem = students.length - visible.length;
+        if (rem > 0) {
+          footerEl.innerHTML = '<button class="load-more-btn" onclick="showAllMyStudents()">Show all ' + students.length + ' students (' + rem + ' more)</button>';
+          footerEl.style.display = 'block';
+        } else {
+          footerEl.style.display = 'none';
+        }
+      }
+    }
+
+    window.showAllMyStudents = function() {
+      _myStudentShowAll = true;
+      var q = document.getElementById('myStudentSearch').value.toLowerCase().trim();
+      var filtered = q ? _allMyStudents.filter(function(s) {
+        return (s.FullName||'').toLowerCase().includes(q) || (s.StudentID||'').toLowerCase().includes(q);
+      }) : _allMyStudents;
+      renderMyStudents(filtered, true);
+    };
+
+    window.filterMyStudents = function() {
+      var q = document.getElementById('myStudentSearch').value.toLowerCase().trim();
+      _myStudentShowAll = false;
+      var filtered = q ? _allMyStudents.filter(function(s) {
+        return (s.FullName||'').toLowerCase().includes(q) || (s.StudentID||'').toLowerCase().includes(q);
+      }) : _allMyStudents;
+      renderMyStudents(filtered, false);
+    };
+
+  </script>
+  <style>
+    .load-more-btn { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; padding: 8px 22px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: background 0.2s; margin-top:4px; }
+    .load-more-btn:hover { background: rgba(99,102,241,0.25); }
+  </style>
+</body>
+</html>

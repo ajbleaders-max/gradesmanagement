@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Principal Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    /* ── Profile bar ── */
+    .profile-bar { display:flex; align-items:center; gap:14px; }
+    .profile-bar img { width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid rgba(37,99,235,0.5); }
+    .profile-bar .no-photo { width:64px; height:64px; border-radius:50%; background:rgba(37,99,235,0.15); display:flex; align-items:center; justify-content:center; font-size:1.9rem; color:#94a3b8; flex-shrink:0; border:2px solid rgba(37,99,235,0.2); }
+    .profile-bar .profile-info h1 { margin:0; font-size:1.35rem; }
+    .profile-bar .profile-info p  { margin:2px 0 0; }
+
+    /* ── Top nav ── */
+    .top-nav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .nav-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 16px; border-radius:10px; font-size:0.83rem; font-weight:600;
+      cursor:pointer; border:1px solid rgba(255,255,255,0.12);
+      background:rgba(37,99,235,0.15); color:#93c5fd;
+      transition:background 0.18s, border-color 0.18s; text-decoration:none;
+    }
+    .nav-btn:hover { background:rgba(37,99,235,0.3); border-color:rgba(37,99,235,0.5); }
+    .nav-btn.green { background:rgba(34,197,94,0.13); border-color:rgba(34,197,94,0.3); color:#86efac; }
+    .nav-btn.green:hover { background:rgba(34,197,94,0.25); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size:0.68rem; font-weight:700; letter-spacing:0.1em;
+      text-transform:uppercase; color:#64748b; margin:0 0 14px;
+    }
+
+    /* ── Stat cards ── */
+    .stat-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+      gap:12px; margin-bottom:20px;
+    }
+    .stat-card {
+      background:rgba(17,24,39,0.95);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:14px; padding:16px 18px;
+      display:flex; flex-direction:column; gap:6px;
+      position:relative; overflow:hidden;
+      transition:transform 0.15s, box-shadow 0.15s;
+    }
+    .stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.25); }
+    .stat-card .stat-icon { font-size:1.4rem; line-height:1; }
+    .stat-card .stat-value { font-size:2rem; font-weight:800; line-height:1; margin:2px 0; }
+    .stat-card .stat-label { font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; }
+    .stat-card::after {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      border-radius:14px 14px 0 0;
+    }
+    .stat-blue  .stat-value { color:#60a5fa; } .stat-blue::after  { background:#2563eb; }
+    .stat-green .stat-value { color:#4ade80; } .stat-green::after { background:#16a34a; }
+    .stat-purple.stat-value { color:#a78bfa; } .stat-purple::after{ background:#7c3aed; }
+    .stat-amber .stat-value { color:#fbbf24; } .stat-amber::after { background:#d97706; }
+    .stat-rose  .stat-value { color:#fb7185; } .stat-rose::after  { background:#e11d48; }
+
+    /* ── Two-col layout ── */
+    .dash-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+      gap:16px; margin-bottom:16px;
+    }
+
+    /* ── People cards (teachers & students) ── */
+    .people-panel {
+      background:rgba(17,24,39,0.95);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:14px; padding:18px;
+    }
+    .people-panel h2 { margin:0 0 4px; font-size:1rem; font-weight:700; }
+    .people-panel .panel-sub { font-size:0.75rem; color:#64748b; margin:0 0 14px; }
+
+    .person-row {
+      display:flex; align-items:flex-start; gap:12px;
+      padding:10px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+    }
+    .person-row:last-child { border-bottom:none; padding-bottom:0; }
+    .person-avatar {
+      width:36px; height:36px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; font-weight:700;
+    }
+    .avatar-blue   { background:rgba(37,99,235,0.18); color:#60a5fa; }
+    .avatar-green  { background:rgba(34,197,94,0.15); color:#4ade80; }
+    .avatar-purple { background:rgba(124,58,237,0.18); color:#a78bfa; }
+    .avatar-amber  { background:rgba(217,119,6,0.18);  color:#fbbf24; }
+    .avatar-rose   { background:rgba(225,29,72,0.15);  color:#fb7185; }
+
+    .person-info { flex:1; min-width:0; }
+    .person-name { font-weight:700; font-size:0.88rem; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .person-meta { font-size:0.75rem; color:#64748b; margin-top:2px; }
+    .person-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+    .ptag {
+      display:inline-block; padding:2px 8px; border-radius:20px;
+      font-size:0.68rem; font-weight:700; letter-spacing:0.04em;
+    }
+    .ptag-blue   { background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.3);  color:#93c5fd; }
+    .ptag-green  { background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.28); color:#86efac; }
+    .ptag-amber  { background:rgba(217,119,6,0.14); border:1px solid rgba(217,119,6,0.28); color:#fcd34d; }
+    .ptag-rose   { background:rgba(225,29,72,0.12); border:1px solid rgba(225,29,72,0.28); color:#fda4af; }
+    .ptag-purple { background:rgba(124,58,237,0.14);border:1px solid rgba(124,58,237,0.28);color:#c4b5fd; }
+    .status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+    .dot-active   { background:#4ade80; box-shadow:0 0 5px rgba(74,222,128,0.5); }
+    .dot-inactive { background:#64748b; }
+
+    /* ── Grade coverage bar ── */
+    .coverage-panel {
+      background:rgba(17,24,39,0.95);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:14px; padding:18px;
+      margin-bottom:16px;
+    }
+    .coverage-panel h2 { margin:0 0 4px; font-size:1rem; font-weight:700; }
+    .coverage-panel .panel-sub { font-size:0.75rem; color:#64748b; margin:0 0 16px; }
+    .cov-bar-wrap { margin-bottom:12px; }
+    .cov-bar-label { display:flex; justify-content:space-between; font-size:0.78rem; margin-bottom:5px; }
+    .cov-bar-label span:first-child { color:#cbd5e1; font-weight:600; }
+    .cov-bar-label span:last-child  { color:#64748b; }
+    .cov-bar-track { height:8px; border-radius:99px; background:rgba(255,255,255,0.06); overflow:hidden; }
+    .cov-bar-fill  { height:100%; border-radius:99px; transition:width 0.7s cubic-bezier(.4,0,.2,1); }
+    .fill-green  { background:linear-gradient(90deg,#16a34a,#4ade80); }
+    .fill-amber  { background:linear-gradient(90deg,#d97706,#fbbf24); }
+    .fill-rose   { background:linear-gradient(90deg,#e11d48,#fb7185); }
+
+    /* ── Class breakdown ── */
+    .class-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+    .class-table th {
+      text-align:left; padding:7px 10px;
+      border-bottom:2px solid rgba(255,255,255,0.08);
+      color:#64748b; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.07em;
+    }
+    .class-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .class-table tr:last-child td { border-bottom:none; }
+    .class-table td:first-child { font-weight:700; color:#60a5fa; }
+    .class-count-bar { display:inline-block; height:6px; border-radius:99px; background:rgba(37,99,235,0.5); vertical-align:middle; margin-left:8px; }
+
+    /* ── Session / date bar ── */
+    .meta-bar {
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:8px;
+      font-size:0.75rem; color:#475569;
+      padding:10px 16px;
+      background:rgba(17,24,39,0.6);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:10px; margin-bottom:18px;
+    }
+    .meta-bar span { display:flex; align-items:center; gap:5px; }
+
+    /* ── Loading / error states ── */
+    .state-msg {
+      display:flex; align-items:center; gap:10px;
+      padding:14px 16px; border-radius:10px; font-size:0.88rem;
+    }
+    .state-msg.info { background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); color:#93c5fd; }
+    .state-msg.warn { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#fca5a5; }
+    .state-msg.ok   { background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.2);  color:#86efac; }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+
+    <!-- ── Top bar ── -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+      <div class="profile-bar">
+        <div id="principalPhotoWrap"><div class="no-photo">&#128100;</div></div>
+        <div class="profile-info">
+          <h1 id="principalName">Principal Dashboard</h1>
+          <p class="muted" id="principalMeta">Loading...</p>
+        </div>
+      </div>
+      <div class="top-nav">
+        <a class="nav-btn" href="manage-teachers.html">👩‍🏫 Teachers</a>
+        <a class="nav-btn" href="manage-students.html">🎓 Students</a>
+        <a class="nav-btn" href="reportcard.html">📄 Report Cards</a>
+        <a class="nav-btn" href="grades_records.html">📝 Grade Records</a>
+        <button class="nav-btn green" onclick="refreshDashboard()" id="refreshBtn">🔄 Refresh</button>
+        <button class="nav-btn" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.25);color:#fca5a5;" onclick="logoutUser()">Logout</button>
+      </div>
+    </div>
+
+    <!-- ── Date / session meta bar ── -->
+    <div class="meta-bar">
+      <span>📅 <strong id="metaDate">—</strong></span>
+      <span>🏫 Academic Year: <strong id="metaYear">—</strong></span>
+      <span>🕐 Last refreshed: <strong id="metaRefreshed">—</strong></span>
+    </div>
+
+    <!-- ── Status message ── -->
+    <div id="dashboardMessage" style="display:none; margin-bottom:14px;"></div>
+
+    <!-- ── Stat cards ── -->
+    <p class="section-label">School at a Glance</p>
+    <div class="stat-grid" id="summaryCards">
+      <div class="stat-card stat-blue"><span class="stat-icon">👑</span><span class="stat-value">—</span><span class="stat-label">Principals</span></div>
+      <div class="stat-card stat-green"><span class="stat-icon">👩‍🏫</span><span class="stat-value">—</span><span class="stat-label">Teachers</span></div>
+      <div class="stat-card stat-amber"><span class="stat-icon">🎓</span><span class="stat-value">—</span><span class="stat-label">Students</span></div>
+      <div class="stat-card" style="--c:#7c3aed;"><span class="stat-icon">📝</span><span class="stat-value" style="color:#a78bfa;">—</span><span class="stat-label">Grade Entries</span><div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;background:#7c3aed;"></div></div>
+      <div class="stat-card stat-rose"><span class="stat-icon">🏫</span><span class="stat-value">—</span><span class="stat-label">Classes</span></div>
+    </div>
+
+    <!-- ── Grade coverage ── -->
+    <div class="coverage-panel" id="coveragePanel" style="display:none;">
+      <h2>📊 Grade Coverage</h2>
+      <p class="panel-sub">Percentage of grade entries recorded relative to enrolled students</p>
+      <div id="coverageBars"></div>
+    </div>
+
+    <!-- ── Recent people ── -->
+    <p class="section-label">Recent Records</p>
+    <div class="dash-grid">
+      <div class="people-panel">
+        <h2>👩‍🏫 Recent Teachers</h2>
+        <p class="panel-sub">Last 5 teachers on record</p>
+        <div id="teacherList"><div class="state-msg info"><span>⏳</span><span>Loading...</span></div></div>
+      </div>
+      <div class="people-panel">
+        <h2>🎓 Recent Students</h2>
+        <p class="panel-sub">Last 5 students on record</p>
+        <div id="studentList"><div class="state-msg info"><span>⏳</span><span>Loading...</span></div></div>
+      </div>
+    </div>
+
+    <!-- ── Class breakdown ── -->
+    <div class="dash-grid">
+      <div class="people-panel">
+        <h2>🏫 Class Breakdown</h2>
+        <p class="panel-sub">Student distribution by class</p>
+        <div id="classBreakdown"><div class="state-msg info"><span>⏳</span><span>Loading...</span></div></div>
+      </div>
+      <div class="people-panel">
+        <h2>📋 Subject Overview</h2>
+        <p class="panel-sub">Active subjects across all grades</p>
+        <div id="subjectOverview"><div class="state-msg info"><span>⏳</span><span>Loading...</span></div></div>
+      </div>
+    </div>
+
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grade Records</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    /* ── Nav ── */
+    .top-nav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .nav-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 16px; border-radius:10px; font-size:0.83rem; font-weight:600;
+      cursor:pointer; border:1px solid rgba(255,255,255,0.12);
+      background:rgba(37,99,235,0.15); color:#93c5fd;
+      transition:background 0.18s, border-color 0.18s; text-decoration:none;
+    }
+    .nav-btn:hover  { background:rgba(37,99,235,0.3); border-color:rgba(37,99,235,0.5); }
+    .nav-btn.active { background:rgba(37,99,235,0.35); border-color:rgba(37,99,235,0.6); color:#fff; }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      margin-bottom:18px;
+    }
+    .filter-bar select, .filter-bar input {
+      background:rgba(11,18,32,0.8);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:10px; color:#f8fafc;
+      padding:9px 14px; font-size:0.88rem; outline:none;
+      transition:border-color 0.2s, box-shadow 0.2s;
+      min-width:160px; cursor:pointer;
+    }
+    .filter-bar select:focus, .filter-bar input:focus {
+      border-color:#2563eb;
+      box-shadow:0 0 0 3px rgba(37,99,235,0.18);
+    }
+    .filter-bar select option { background:#0f172a; color:#f8fafc; }
+    .filter-bar input::placeholder { color:#4b5563; }
+    .result-count { font-size:0.78rem; color:#64748b; white-space:nowrap; margin-left:auto; }
+
+    /* ── Summary badges ── */
+    .summary-row {
+      display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px;
+    }
+    .badge {
+      display:flex; flex-direction:column; align-items:center;
+      padding:10px 20px; border-radius:12px;
+      background:rgba(17,24,39,0.8); border:1px solid rgba(255,255,255,0.07);
+      min-width:100px;
+    }
+    .badge .b-val  { font-size:1.4rem; font-weight:800; color:#f8fafc; }
+    .badge .b-label{ font-size:0.7rem; color:#64748b; letter-spacing:0.05em; text-transform:uppercase; margin-top:2px; }
+
+    /* ── Grade table ── */
+    .gr-table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+    .gr-table th {
+      text-align:left; padding:10px 10px;
+      border-bottom:2px solid rgba(255,255,255,0.1);
+      color:#94a3b8; font-size:0.72rem;
+      letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;
+    }
+    .gr-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+    .gr-table tr:hover td { background:rgba(37,99,235,0.05); }
+
+    .gr-table td.sid   { font-weight:700; color:#60a5fa; white-space:nowrap; }
+    .gr-table td.sname { font-weight:600; color:#f1f5f9; }
+    .gr-table td.cls   { color:#94a3b8; white-space:nowrap; }
+    .gr-table td.subj  { color:#fbbf24; font-weight:600; }
+    .gr-table td.gcell { text-align:center; font-weight:700; }
+    .gr-table td.avg-cell { text-align:center; font-weight:800; }
+    .gr-table th.exam-th { color:#f472b6; }
+    .gr-table th.avg-th  { color:#34d399; }
+
+    /* Grade colour bands */
+    .g-green { color:#4ade80; }
+    .g-blue  { color:#60a5fa; }
+    .g-red   { color:#f87171; }
+    .g-muted { color:#475569; }
+
+    /* ── State messages ── */
+    .state-msg {
+      display:flex; align-items:center; gap:10px;
+      padding:16px; border-radius:10px; font-size:0.88rem;
+    }
+    .state-msg.info { background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); color:#93c5fd; }
+    .state-msg.warn { background:rgba(239,68,68,0.08);  border:1px solid rgba(239,68,68,0.2);  color:#fca5a5; }
+    .state-msg.load { background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.2); color:#fde68a; }
+
+    .table-scroll { overflow-x:auto; }
+
+    /* ── Page header ── */
+    .page-header {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      flex-wrap:wrap; gap:12px; margin-bottom:20px;
+    }
+    .page-title   { margin:0; font-size:1.35rem; font-weight:800; }
+    .page-subtitle{ margin:4px 0 0; font-size:0.8rem; color:#64748b; }
+
+    /* ── Context header (Class / Subject / Year shown above table) ── */
+    .context-header {
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items:center;
+      padding:12px 20px; margin-bottom:14px;
+      background:rgba(37,99,235,0.07);
+      border:1px solid rgba(37,99,235,0.18);
+      border-radius:10px;
+    }
+    .ctx-item { display:flex; flex-direction:column; gap:2px; }
+    .ctx-item.center { align-items:center; text-align:center; }
+    .ctx-item.right  { align-items:flex-end; text-align:right; }
+    .ctx-label { font-size:0.68rem; color:#64748b; letter-spacing:0.07em; text-transform:uppercase; }
+    .ctx-val   { font-size:0.97rem; font-weight:700; color:#f1f5f9; }
+    .ctx-val.cls-val  { color:#93c5fd; }
+    .ctx-val.subj-val { color:#fbbf24; }
+    .ctx-val.year-val { color:#a78bfa; }
+
+    /* Export btn */
+    .btn-export {
+      padding:8px 18px; border-radius:10px; font-size:0.83rem; font-weight:700;
+      background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.3);
+      color:#6ee7b7; cursor:pointer;
+      transition:background 0.18s, border-color 0.18s;
+    }
+    .btn-export:hover { background:rgba(52,211,153,0.25); border-color:#34d399; }
+    .btn-export:disabled { opacity:0.4; cursor:not-allowed; }
+
+    /* Refresh btn */
+    .btn-refresh {
+      padding:8px 18px; border-radius:10px; font-size:0.83rem; font-weight:700;
+      background:rgba(37,99,235,0.12); border:1px solid rgba(37,99,235,0.3);
+      color:#93c5fd; cursor:pointer;
+      transition:background 0.18s, border-color 0.18s;
+    }
+    .btn-refresh:hover    { background:rgba(37,99,235,0.25); border-color:#2563eb; }
+    .btn-refresh:disabled { opacity:0.4; cursor:not-allowed; }
+
+    /* School heading — hidden on screen, shown on print */
+    .print-school-header { display:none; }
+
+    /* Signature footer — hidden on screen, shown on print */
+    .print-signature { display:none; }
+
+    /* PDF print styles */
+    @media print {
+      * { print-color-adjust:exact !important; -webkit-print-color-adjust:exact !important; }
+      html, body { background:#fff !important; color:#000 !important; overflow:hidden; }
+      ::-webkit-scrollbar { display:none; }
+
+      /* Hide all screen-only UI */
+      .page-header, .summary-row, .filter-bar, #filterBar,
+      .btn-export, .btn-refresh, .top-nav, #stateMsg,
+      .result-count { display:none !important; }
+
+      .page-shell { max-width:100%; padding:0; }
+      .panel { background:#fff !important; border:none !important; box-shadow:none !important; padding:0; }
+
+      /* School heading */
+      .print-school-header {
+        display:block !important;
+        text-align:center;
+        margin-bottom:18px;
+        border-bottom:2px solid #1a3a6b;
+        padding-bottom:12px;
+      }
+      .print-school-header .sch-name {
+        font-size:1.3rem; font-weight:900; color:#1a3a6b !important;
+        letter-spacing:0.03em; margin:0 0 3px;
+      }
+      .print-school-header .sch-addr {
+        font-size:0.78rem; color:#444 !important; margin:0; line-height:1.6;
+      }
+
+      /* Context header */
+      .context-header {
+        background:#eef2ff !important; border:1px solid #b8c8f8 !important;
+        color:#000 !important; margin-bottom:12px;
+        display:grid !important;
+      }
+      .ctx-label { color:#555 !important; }
+      .ctx-val.cls-val  { color:#1a3a6b !important; }
+      .ctx-val.subj-val { color:#b45309 !important; }
+      .ctx-val.year-val { color:#5b21b6 !important; }
+
+      /* Table */
+      .gr-table th {
+        color:#333 !important; border-bottom:2px solid #999 !important;
+        background:#f5f7ff !important;
+      }
+      .gr-table td { border-bottom:1px solid #ddd !important; }
+      .gr-table tr:hover td { background:none !important; }
+
+      /* Grade colours — keep them vivid */
+      .g-green, td.g-green, td.avg-cell.g-green { color:#166534 !important; font-weight:700; }
+      .g-blue,  td.g-blue,  td.avg-cell.g-blue  { color:#1e40af !important; font-weight:700; }
+      .g-red,   td.g-red,   td.avg-cell.g-red   { color:#b91c1c !important; font-weight:700; }
+      .g-muted, td.g-muted                       { color:#9ca3af !important; }
+
+      .gr-table td.sid   { color:#1e40af !important; }
+      .gr-table td.sname { color:#111 !important; font-weight:600; }
+
+      /* Signature footer */
+      .print-signature {
+        display:flex !important;
+        justify-content:flex-start;
+        align-items:flex-end;
+        gap:60px;
+        margin-top:48px;
+        padding-top:16px;
+        border-top:1px solid #ccc;
+        flex-wrap:wrap;
+      }
+      .sig-block { display:flex; flex-direction:column; gap:4px; }
+      .sig-line  { width:220px; border-bottom:1px solid #333; height:32px; }
+      .sig-label { font-size:0.72rem; color:#555 !important; letter-spacing:0.04em; margin-top:4px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+
+    <!-- ── Top bar ── -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">📝 Grade Records</h1>
+        <p class="page-subtitle">View all grade entries — filter by class and subject</p>
+      </div>
+      <div class="top-nav">
+        <a class="nav-btn" href="admin.html">🏠 Dashboard</a>
+        <a class="nav-btn" href="manage-teachers.html">👩‍🏫 Teachers</a>
+        <a class="nav-btn" href="manage-students.html">🎓 Students</a>
+        <a class="nav-btn" href="reportcard.html">📄 Report Cards</a>
+        <a class="nav-btn active" href="grades_records.html">📝 Grade Records</a>
+      </div>
+    </div>
+
+    <!-- ── Summary badges ── -->
+    <div class="summary-row" id="summaryRow" style="display:none;">
+      <div class="badge"><span class="b-val" id="bTotal">—</span><span class="b-label">Total Records</span></div>
+      <div class="badge"><span class="b-val" id="bStudents">—</span><span class="b-label">Students</span></div>
+      <div class="badge"><span class="b-val" id="bClasses">—</span><span class="b-label">Classes</span></div>
+      <div class="badge"><span class="b-val" id="bSubjects">—</span><span class="b-label">Subjects</span></div>
+      <div class="badge" style="margin-left:auto; flex-direction:row; gap:8px; background:none; border:none; padding:0;">
+        <button class="btn-refresh" id="refreshBtn" onclick="refreshData()">🔄 Refresh</button>
+        <button class="btn-export" id="exportBtn" onclick="exportPDF()" disabled>🖨 Print PDF</button>
+      </div>
+    </div>
+
+    <!-- ── Filters ── -->
+    <section class="panel">
+
+      <!-- School heading: only visible when printing -->
+      <div class="print-school-header">
+        <p class="sch-name">AJB Leader Academy</p>
+        <p class="sch-addr">
+          Diamond Creek, Soul Clinic Community<br>
+          Paynesville City, Liberia
+        </p>
+      </div>
+
+      <div class="filter-bar" id="filterBar" style="display:none;">
+        <input type="text" id="gradeSearch"
+               placeholder="Search by name or ID…"
+               oninput="applyFilters()" style="flex:1; min-width:180px;" />
+        <select id="filterClass" onchange="applyFilters()">
+          <option value="">All Classes</option>
+        </select>
+        <select id="filterSubject" onchange="applyFilters()">
+          <option value="">All Subjects</option>
+        </select>
+        <span class="result-count" id="rowCount"></span>
+      </div>
+
+      <!-- Loading / empty state -->
+      <div id="stateMsg" class="state-msg load">
+        <span>⏳</span><span>Loading grade records…</span>
+      </div>
+
+      <!-- Context header: CLASS left | SUBJECT center | YEAR right -->
+      <div id="contextHeader" class="context-header" style="display:none;">
+        <div class="ctx-item">
+          <span class="ctx-label">Class</span>
+          <span class="ctx-val cls-val" id="ctxClass">—</span>
+        </div>
+        <div class="ctx-item center">
+          <span class="ctx-label">Subject</span>
+          <span class="ctx-val subj-val" id="ctxSubject">—</span>
+        </div>
+        <div class="ctx-item right">
+          <span class="ctx-label">Academic Year</span>
+          <span class="ctx-val year-val" id="ctxYear">—</span>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-scroll" id="tableWrap" style="display:none;"></div>
+
+      <!-- Signature footer: only visible when printing -->
+      <div class="print-signature">
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-label">TEACHER'S SIGNATURE</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-label">TEACHER'S NAME (PRINT)</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line" style="width:140px;"></div>
+          <div class="sig-label">DATE</div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    guardRoute('principal');
+
+    // ── Column detection helpers ────────────────────────────────────────────
+    var SKIP_DISPLAY = ['studentid','student id','studentname','student name',
+                        'class','subject','teacher'];
+    var PERIOD_RE    = /^period\s*(\d+)$/i;
+    var EXAM_RE      = /^exam\s*(\d+)$/i;
+    var AVG_RE       = /avg|average/i;
+
+    var _allRows    = [];   // parsed grade objects
+    var _headers    = [];   // ordered column keys from sheet
+    var _inputCols  = [];   // grade-value columns (periods, exams, avgs)
+    var _filtered   = [];   // currently visible rows
+
+    var _academicYear = '—';   // populated from STUDENTS sheet
+
+    // ── Boot ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async function () {
+      try {
+        // Fetch grades and academic year in parallel
+        var [res, dash] = await Promise.all([
+          apiRequest('getGrades'),
+          apiRequest('getDashboard')
+        ]);
+
+        // ── Pull academic year from STUDENTS sheet ──
+        if (dash && dash.ok && dash.allStudents && dash.allStudents.length) {
+          var yr = '';
+          for (var s = 0; s < dash.allStudents.length; s++) {
+            var ay = String(dash.allStudents[s]['AcademicYear'] || dash.allStudents[s]['Academic Year'] || '').trim();
+            if (ay) { yr = ay; break; }
+          }
+          if (yr) _academicYear = yr;
+        }
+
+        if (!res || !res.ok) {
+          showState('warn', '⚠️ ' + (res && res.message ? res.message : 'Failed to load grades.'));
+          return;
+        }
+
+        var raw = res.grades || [];  // array of arrays: row 0 = headers
+        if (!raw.length) {
+          showState('info', 'ℹ️ No grade data found in the sheet.');
+          return;
+        }
+
+        // Parse headers
+        _headers = raw[0].map(function(h){ return String(h).trim(); });
+
+        // Build grade objects
+        _allRows = [];
+        for (var i = 1; i < raw.length; i++) {
+          var row = raw[i];
+          var obj = {};
+          _headers.forEach(function(h, j) { obj[h] = String(row[j] !== undefined ? row[j] : '').trim(); });
+          // Skip blank rows
+          var sid = obj['StudentID'] || obj['Student ID'] || '';
+          if (!sid) continue;
+          _allRows.push(obj);
+        }
+
+        // Discover input cols (preserve header order)
+        _inputCols = _headers.filter(function(h) {
+          return SKIP_DISPLAY.indexOf(h.toLowerCase().trim()) === -1;
+        });
+
+        if (!_allRows.length) {
+          showState('info', 'ℹ️ No grade records found.');
+          return;
+        }
+
+        buildFilters();
+        updateSummary(_allRows);
+        document.getElementById('summaryRow').style.display = 'flex';
+        document.getElementById('filterBar').style.display  = 'flex';
+        document.getElementById('stateMsg').style.display   = 'none';
+
+        // ── Set default filters: Grade 1 + Bible ──
+        var clsSel  = document.getElementById('filterClass');
+        var subjSel = document.getElementById('filterSubject');
+        // Find a matching option (case-insensitive)
+        for (var i = 0; i < clsSel.options.length; i++) {
+          if (clsSel.options[i].value.toLowerCase().replace(/\s+/g,'') === 'grade1') {
+            clsSel.selectedIndex = i; break;
+          }
+        }
+        for (var j = 0; j < subjSel.options.length; j++) {
+          if (subjSel.options[j].value.toLowerCase() === 'bible') {
+            subjSel.selectedIndex = j; break;
+          }
+        }
+
+        applyFilters();
+
+      } catch(e) {
+        showState('warn', '⚠️ Error: ' + e.message);
+      }
+    });
+
+    // ── State message ──────────────────────────────────────────────────────
+    function showState(type, html) {
+      var el = document.getElementById('stateMsg');
+      el.className = 'state-msg ' + type;
+      el.innerHTML = html;
+      el.style.display = 'flex';
+      document.getElementById('tableWrap').style.display = 'none';
+    }
+
+    // ── Populate filter dropdowns ──────────────────────────────────────────
+    function buildFilters() {
+      var classes  = {}, subjects = {};
+      _allRows.forEach(function(r) {
+        var cls  = r['Class']   || r['class']   || '';
+        var subj = r['Subject'] || r['subject'] || '';
+        if (cls)  classes[cls]   = true;
+        if (subj) subjects[subj] = true;
+      });
+
+      var clsSel  = document.getElementById('filterClass');
+      var subjSel = document.getElementById('filterSubject');
+
+      Object.keys(classes).sort().forEach(function(c) {
+        var o = document.createElement('option'); o.value = c; o.textContent = c; clsSel.appendChild(o);
+      });
+      Object.keys(subjects).sort().forEach(function(s) {
+        var o = document.createElement('option'); o.value = s; o.textContent = s; subjSel.appendChild(o);
+      });
+    }
+
+    // ── Summary badges ─────────────────────────────────────────────────────
+    function updateSummary(rows) {
+      var students = {}, classes = {}, subjects = {};
+      rows.forEach(function(r) {
+        var sid  = r['StudentID'] || r['Student ID'] || '';
+        var cls  = r['Class']   || '';
+        var subj = r['Subject'] || '';
+        if (sid)  students[sid]   = true;
+        if (cls)  classes[cls]    = true;
+        if (subj) subjects[subj]  = true;
+      });
+      document.getElementById('bTotal').textContent    = rows.length;
+      document.getElementById('bStudents').textContent  = Object.keys(students).length;
+      document.getElementById('bClasses').textContent   = Object.keys(classes).length;
+      document.getElementById('bSubjects').textContent  = Object.keys(subjects).length;
+    }
+
+    // ── Filters ────────────────────────────────────────────────────────────
+    function applyFilters() {
+      var q    = (document.getElementById('gradeSearch').value  || '').trim().toLowerCase();
+      var cls  = (document.getElementById('filterClass').value  || '').toLowerCase();
+      var subj = (document.getElementById('filterSubject').value|| '').toLowerCase();
+
+      _filtered = _allRows.filter(function(r) {
+        var sid   = (r['StudentID'] || r['Student ID'] || '').toLowerCase();
+        var sname = (r['StudentName'] || r['Student Name'] || '').toLowerCase();
+        var rcls  = (r['Class']   || '').toLowerCase();
+        var rsubj = (r['Subject'] || '').toLowerCase();
+
+        var matchQ    = !q    || sid.indexOf(q) !== -1 || sname.indexOf(q) !== -1;
+        var matchCls  = !cls  || rcls  === cls;
+        var matchSubj = !subj || rsubj === subj;
+        return matchQ && matchCls && matchSubj;
+      });
+
+      // ── Update context header ──
+      var ctxCls  = document.getElementById('filterClass').value   || 'All Classes';
+      var ctxSubj = document.getElementById('filterSubject').value || 'All Subjects';
+      document.getElementById('ctxClass').textContent   = ctxCls;
+      document.getElementById('ctxSubject').textContent = ctxSubj;
+      document.getElementById('ctxYear').textContent    = _academicYear;
+      var ctxHeader = document.getElementById('contextHeader');
+      ctxHeader.style.display = 'grid';
+
+      updateSummary(_filtered);
+
+      var rowCount = document.getElementById('rowCount');
+      var exportBtn = document.getElementById('exportBtn');
+
+      if (!_filtered.length) {
+        showState('info', '<span>🔍</span><span>No records match your filters.</span>');
+        rowCount.textContent = '0 rows';
+        exportBtn.disabled   = true;
+        return;
+      }
+
+      rowCount.textContent = _filtered.length + ' row' + (_filtered.length !== 1 ? 's' : '');
+      exportBtn.disabled   = false;
+      document.getElementById('stateMsg').style.display = 'none';
+      renderTable(_filtered);
+    }
+
+    // ── Grade colour ───────────────────────────────────────────────────────
+    function gClass(v) {
+      var n = parseFloat(v);
+      if (isNaN(n) || v === '' || v === '—') return 'g-muted';
+      if (n >= 90) return 'g-green';
+      if (n >= 70) return 'g-blue';
+      if (n >= 60) return 'g-red';
+      return 'g-red';
+    }
+
+    function displayVal(v) {
+      if (v === '' || v === '—' || v === undefined) return '<span style="color:#334155;">—</span>';
+      var n = parseFloat(v);
+      if (!isNaN(n)) return Math.round(n);   // round — no decimals
+      return v;
+    }
+
+    // ── Render table ───────────────────────────────────────────────────────
+    function renderTable(rows) {
+      // Build header — NO Class or Subject columns (shown in context header above)
+      var thead = '<tr>' +
+        '<th>Student ID</th>' +
+        '<th>Student Name</th>';
+
+      _inputCols.forEach(function(c) {
+        var lc    = c.toLowerCase().trim();
+        var mp    = PERIOD_RE.exec(lc);
+        var me    = EXAM_RE.exec(lc);
+        var isAvg = AVG_RE.test(lc);
+        var label = mp ? 'P' + mp[1] : (me ? 'Exam ' + me[1] : c);
+        var cls   = me ? ' class="exam-th"' : (isAvg ? ' class="avg-th"' : '');
+        thead += '<th' + cls + '>' + label + '</th>';
+      });
+      thead += '</tr>';
+
+      // Build body — NO Class or Subject cells
+      var tbody = rows.map(function(r) {
+        var sid   = r['StudentID']   || r['Student ID']   || '';
+        var sname = r['StudentName'] || r['Student Name'] || '';
+
+        var cells = _inputCols.map(function(c) {
+          var lc    = c.toLowerCase().trim();
+          var isAvg = AVG_RE.test(lc);
+          var v     = r[c] || '';
+          var gc    = gClass(v);
+          var cellCls = isAvg ? 'avg-cell ' + gc : 'gcell ' + gc;
+          return '<td class="' + cellCls + '">' + displayVal(v) + '</td>';
+        }).join('');
+
+        return '<tr>' +
+          '<td class="sid">'   + sid   + '</td>' +
+          '<td class="sname">' + sname + '</td>' +
+          cells + '</tr>';
+      }).join('');
+
+      document.getElementById('tableWrap').innerHTML =
+        '<table class="gr-table"><thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
+      document.getElementById('tableWrap').style.display = 'block';
+    }
+
+    // ── Refresh ────────────────────────────────────────────────────────────
+    async function refreshData() {
+      var btn = document.getElementById('refreshBtn');
+      btn.disabled = true; btn.textContent = '⏳ Refreshing…';
+      // Save filter state
+      var savedSearch = document.getElementById('gradeSearch').value;
+      var savedClass  = document.getElementById('filterClass').value;
+      var savedSubj   = document.getElementById('filterSubject').value;
+      try {
+        var res = await apiRequest('getGrades');
+        if (!res || !res.ok) throw new Error(res && res.message ? res.message : 'Failed.');
+        var raw = res.grades || [];
+        _headers   = raw[0] ? raw[0].map(function(h){ return String(h).trim(); }) : [];
+        _allRows   = [];
+        for (var i = 1; i < raw.length; i++) {
+          var row = raw[i], obj = {};
+          _headers.forEach(function(h, j){ obj[h] = String(raw[i][j] !== undefined ? raw[i][j] : '').trim(); });
+          if (obj['StudentID'] || obj['Student ID']) _allRows.push(obj);
+        }
+        _inputCols = _headers.filter(function(h){ return SKIP_DISPLAY.indexOf(h.toLowerCase().trim()) === -1; });
+        // Rebuild subject dropdown (class dropdown may have new entries too)
+        var clsSel  = document.getElementById('filterClass');
+        var subjSel = document.getElementById('filterSubject');
+        clsSel.innerHTML  = '<option value="">All Classes</option>';
+        subjSel.innerHTML = '<option value="">All Subjects</option>';
+        buildFilters();
+        // Restore filters
+        // Re-fetch academic year too
+        var dash2 = await apiRequest('getDashboard');
+        if (dash2 && dash2.ok && dash2.allStudents && dash2.allStudents.length) {
+          for (var s2 = 0; s2 < dash2.allStudents.length; s2++) {
+            var ay2 = String(dash2.allStudents[s2]['AcademicYear'] || dash2.allStudents[s2]['Academic Year'] || '').trim();
+            if (ay2) { _academicYear = ay2; break; }
+          }
+        }
+
+        clsSel.value  = savedClass;
+        subjSel.value = savedSubj;
+        document.getElementById('gradeSearch').value = savedSearch;
+        applyFilters();
+      } catch(e) {
+        showState('warn', '⚠️ Refresh failed: ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '🔄 Refresh';
+      }
+    }
+
+    // ── Print PDF ──────────────────────────────────────────────────────────
+    function exportPDF() {
+      window.print();
+    }
+  </script>
+</body>
+</html>

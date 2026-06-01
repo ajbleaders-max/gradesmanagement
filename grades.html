@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grades Input</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    /* ── Top nav ── */
+    .top-nav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .nav-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 18px; border-radius:10px; font-size:0.85rem; font-weight:600;
+      cursor:pointer; border:1px solid rgba(255,255,255,0.12);
+      background:rgba(37,99,235,0.15); color:#93c5fd;
+      transition:background 0.18s, border-color 0.18s;
+      text-decoration:none;
+    }
+    .nav-btn:hover { background:rgba(37,99,235,0.3); border-color:rgba(37,99,235,0.5); }
+
+    /* ── Search bar ── */
+    .search-bar {
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      margin-bottom:18px;
+    }
+    .search-bar input {
+      flex:1; min-width:200px;
+      background:rgba(11,18,32,0.8);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:10px; color:#f8fafc;
+      padding:9px 14px; font-size:0.88rem; outline:none;
+      transition:border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-bar input:focus {
+      border-color:#2563eb;
+      box-shadow:0 0 0 3px rgba(37,99,235,0.18);
+    }
+    .search-bar input::placeholder { color:#4b5563; }
+    .search-bar select {
+      background:rgba(11,18,32,0.8);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:10px; color:#f8fafc;
+      padding:9px 14px; font-size:0.88rem; outline:none;
+      transition:border-color 0.2s, box-shadow 0.2s;
+      min-width:140px; cursor:pointer;
+    }
+    .search-bar select:focus {
+      border-color:#2563eb;
+      box-shadow:0 0 0 3px rgba(37,99,235,0.18);
+    }
+    .search-bar select option { background:#0f172a; color:#f8fafc; }
+    .result-count { font-size:0.78rem; color:#64748b; white-space:nowrap; margin-left:auto; }
+
+    /* ── Grade input table ── */
+    .gi-table { width:100%; border-collapse:collapse; font-size:0.87rem; }
+    .gi-table th {
+      text-align:left; padding:9px 10px;
+      border-bottom:2px solid rgba(255,255,255,0.1);
+      color:#94a3b8; font-size:0.73rem;
+      letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;
+    }
+    .gi-table td { padding:7px 8px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+    .gi-table tr:first-child td { border-top:2px solid rgba(37,99,235,0.25); padding-top:11px; }
+
+    .gi-table td.sid   { font-weight:700; color:#60a5fa; white-space:nowrap; }
+    .gi-table td.sname { font-weight:600; color:#f1f5f9; }
+    .gi-table td.cls   { color:#94a3b8; white-space:nowrap; }
+    .gi-table td.subj  { color:#fbbf24; font-weight:600; }
+
+    /* Grade input cell */
+    .gi-table td.gcell { text-align:center; padding:5px 4px; }
+    .grade-input {
+      width:58px; text-align:center;
+      background:rgba(11,18,32,0.9);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:7px; color:#f8fafc;
+      padding:5px 4px; font-size:0.85rem; font-weight:700;
+      outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+    }
+    .grade-input:focus {
+      border-color:#2563eb;
+      box-shadow:0 0 0 3px rgba(37,99,235,0.18);
+    }
+    /* locked — already has a value */
+    .grade-input.locked {
+      background:rgba(255,255,255,0.04);
+      border-color:rgba(255,255,255,0.06);
+      color:#64748b; cursor:not-allowed;
+    }
+
+    /* Grade colour bands */
+    .grade-input.g-red   { color:#f87171 !important; }
+    .grade-input.g-blue  { color:#60a5fa !important; }
+    .grade-input.g-green { color:#4ade80 !important; }
+    .grade-input.g-white { color:#f8fafc !important; }
+
+    /* Save row button */
+    .btn-save-row {
+      padding:5px 14px; border-radius:8px; font-size:0.78rem; font-weight:700;
+      background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3);
+      color:#86efac; cursor:pointer;
+      transition:background 0.18s, border-color 0.18s;
+      white-space:nowrap;
+    }
+    .btn-save-row:hover:not(:disabled) { background:rgba(34,197,94,0.3); border-color:#22c55e; }
+    .btn-save-row:disabled { opacity:0.4; cursor:not-allowed; }
+    .btn-save-row.saving  { opacity:0.6; cursor:wait; }
+    .btn-save-row.saved   { background:rgba(34,197,94,0.08); color:#4ade80; border-color:rgba(34,197,94,0.15); }
+
+    /* Status dot next to button */
+    .row-status { font-size:0.75rem; white-space:nowrap; }
+    .row-status.ok  { color:#4ade80; }
+    .row-status.err { color:#f87171; }
+
+    /* Empty / loading states */
+    .state-msg {
+      display:flex; align-items:center; gap:10px;
+      padding:16px; border-radius:10px; font-size:0.88rem;
+    }
+    .state-msg.info { background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); color:#93c5fd; }
+    .state-msg.warn { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#fca5a5; }
+
+    .table-scroll { overflow-x:auto; }
+
+    /* Exam column header accent */
+    th.exam-th { color:#f472b6; }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+
+    <!-- Top bar -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+      <h1 style="margin:0;">Grades Input</h1>
+      <div class="top-nav">
+        <a href="teacher.html" class="nav-btn">🏠 Dashboard</a>
+        <span style="width:14px;"></span>
+        <button class="nav-btn" onclick="refreshGrades()" id="gradesRefreshBtn" style="background:rgba(34,197,94,0.13);border-color:rgba(34,197,94,0.3);color:#86efac;">🔄 Refresh</button>
+        <button class="btn btn-secondary" onclick="logoutUser()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Integrity statement -->
+    <div style="margin-bottom:16px; padding:10px 16px; border-radius:10px; background:rgba(37,99,235,0.07); border-left:3px solid #2563eb;">
+      <p style="margin:0; font-size:0.82rem; color:#93c5fd; font-style:italic;">
+        "Every grade you enter is a reflection of a student's journey — record it with honesty, fairness, and the care they deserve."
+      </p>
+    </div>
+
+    <!-- Search -->
+    <section class="panel">
+      <div class="search-bar" id="filterBar" style="display:none;">
+        <input type="text" id="gradeSearch"
+               placeholder="Search by name or ID…"
+               oninput="applyFilters()" />
+        <select id="filterClass" onchange="applyFilters()">
+          <option value="">All Classes</option>
+        </select>
+        <select id="filterSubject" onchange="applyFilters()">
+          <option value="">All Subjects</option>
+        </select>
+        <span class="result-count" id="rowCount"></span>
+      </div>
+      <div id="searchPrompt" class="state-msg info" style="margin-bottom:0;">
+        <span>🔍</span><span>Use the filters above to search for a student or select a class / subject to begin.</span>
+      </div>
+      <div class="table-scroll" id="tableWrap" style="display:none;">
+        <div class="state-msg info"><span>⏳</span><span>Loading students and grades…</span></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    guardRoute('teacher');
+
+    // Columns the teacher fills in (must match sheet header exactly, case-insensitive)
+    // INPUT_COLS is discovered dynamically from actual sheet keys
+    // so it works whether headers are 'Period1' or 'Period 1' etc.
+    var INPUT_COLS   = [];   // filled by discoverInputCols()
+    var PERIOD_RE    = /^period\s*(\d+)$/i;
+    var EXAM_RE_DISC = /^exam(\d+)$/i;
+    var SKIP_COLS    = ['studentid','student id','studentname','student name',
+                        'class','subject','sem1 avg','sem2 avg','yearly avg',
+                        'teacher','average','semester'];
+
+    function discoverInputCols(grades, sheetHeaders) {
+      // sheetHeaders (from api gradeHeaders) is the ONLY reliable source of column order
+      // because Apps Script may return object keys in arbitrary order.
+      // Always prefer sheetHeaders; fall back to grade object keys only if unavailable.
+      var orderedKeys = (sheetHeaders && sheetHeaders.length) ? sheetHeaders : Object.keys(grades[0] || {});
+      if (!orderedKeys.length) return;
+      INPUT_COLS = [];
+      orderedKeys.forEach(function(k) {
+        var lower = k.toLowerCase().trim();
+        if (SKIP_COLS.indexOf(lower) !== -1) return;
+        INPUT_COLS.push(k);
+      });
+    }
+    var EXAM_RE    = /^exam\d+$/i;
+
+    var _rows = [];   // flat array of objects built from API data
+    var _gradesUsername = '';
+
+    // ── Refresh button ─────────────────────────────────────────────────────
+    function refreshGrades() {
+      var btn = document.getElementById('gradesRefreshBtn');
+      if (btn) { btn.textContent = '⏳ Refreshing…'; btn.disabled = true; }
+      // Save current filter state
+      var savedSearch  = document.getElementById('gradeSearch')  ? document.getElementById('gradeSearch').value  : '';
+      var savedClass   = document.getElementById('filterClass')   ? document.getElementById('filterClass').value   : '';
+      var savedSubject = document.getElementById('filterSubject') ? document.getElementById('filterSubject').value : '';
+
+      apiRequest('getTeacherData', { username: _gradesUsername }).then(function(res) {
+        if (res && res.ok) {
+          _rows = [];
+          discoverInputCols(res.grades || [], res.gradeHeaders || []);
+          buildTable(res.teacher || {}, res.students || [], res.grades || [], res.classSubjects || []);
+          // Restore filters
+          if (document.getElementById('gradeSearch'))  document.getElementById('gradeSearch').value  = savedSearch;
+          if (document.getElementById('filterClass'))   document.getElementById('filterClass').value   = savedClass;
+          if (document.getElementById('filterSubject')) document.getElementById('filterSubject').value = savedSubject;
+          if (savedSearch || savedClass || savedSubject) applyFilters();
+        }
+      }).catch(function(){}).finally(function(){
+        if (btn) { btn.textContent = '🔄 Refresh'; btn.disabled = false; }
+      });
+    }
+
+    // ── Colour helper ──────────────────────────────────────────────────────
+    function gClass(v) {
+      var n = parseFloat(v);
+      if (isNaN(n) || v === '') return '';
+      if (n >= 90 && n <= 100) return 'g-green';
+      if (n >= 70 && n <=  89) return 'g-blue';
+      if (n >= 60 && n <=  69) return 'g-red';
+      return 'g-white';
+    }
+
+    // ── Boot ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async function () {
+      var session  = getSession();
+      var username = session ? session.username : '';
+      _gradesUsername = username;
+      try {
+        var res = await apiRequest('getTeacherData', { username: username });
+        if (!res || !res.ok) {
+          showMsg('warn', 'Could not load data: ' + (res && res.message ? res.message : 'Unknown error'));
+          return;
+        }
+        // Pass gradeHeaders from API so columns are known even when grades array is empty
+        var gradeHeaders = res.gradeHeaders || [];
+        discoverInputCols(res.grades || [], gradeHeaders);
+        buildTable(res.teacher || {}, res.students || [], res.grades || [], res.classSubjects || []);
+      } catch(e) {
+        showMsg('warn', 'Error: ' + e.message);
+      }
+    });
+
+    function showMsg(type, text) {
+      var prompt = document.getElementById('searchPrompt');
+      if (prompt) {
+        prompt.className = 'state-msg ' + type;
+        prompt.innerHTML = '<span>' + (type==='warn'?'⚠️':'ℹ️') + '</span><span>' + text + '</span>';
+        prompt.style.display = 'flex';
+      }
+      var wrap = document.getElementById('tableWrap');
+      if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; }
+    }
+
+    // ── Build table ────────────────────────────────────────────────────────
+    function buildTable(teacher, students, grades, classSubjects) {
+      if (!students.length) {
+        showMsg('warn', 'No students found for your assigned classes.');
+        return;
+      }
+
+      // Determine which subjects this teacher covers
+      var assignedSubjects = String(teacher.AssignedSubjects || 'ALL').trim();
+      var isAllSubjects    = assignedSubjects.toUpperCase() === 'ALL';
+      // If ALL: use classSubjects from SUBJECTS sheet (filtered by teacher's class).
+      // If specific: use the comma-separated list from the teacher record.
+      var subjectList      = isAllSubjects
+        ? (classSubjects || [])
+        : assignedSubjects.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+
+      // Index existing grade rows by "sid||subject" for fast lookup
+      var gradeIndex = {};
+      grades.forEach(function(g) {
+        var sid  = String(g.StudentID || g['Student ID'] || '').trim().toLowerCase();
+        var subj = String(g.Subject || '').trim().toLowerCase();
+        if (sid && subj) gradeIndex[sid + '||' + subj] = g;
+      });
+
+      // ── Strategy: students are the source of truth for rows ─────────────
+      // One row per student × subject. Existing grades are pre-filled and
+      // locked; empty cells are open for input. This way a new teacher with
+      // no grades yet still sees all their students ready for entry.
+      _rows = [];
+      var idx = 0;
+
+      students.forEach(function(s) {
+        var sid   = String(s.StudentID || s['Student ID'] || '').trim();
+        var sname = String(s.FullName  || s['Full Name']  || '').trim();
+        var cls   = String(s.Class || '').trim();
+        if (!sid) return;
+
+        var subjects = isAllSubjects ? subjectList : subjectList;
+
+        // If no explicit subject list, derive from existing grade rows for this student
+        // OR fall back to a single blank row so the teacher can still enter data
+        var rowSubjects = [];
+        if (subjectList.length) {
+          // Use the resolved subject list (from SUBJECTS sheet or teacher assignment)
+          rowSubjects = subjectList;
+        } else {
+          // Last resort: collect subjects already recorded for this student
+          var found = [];
+          grades.forEach(function(g) {
+            var gsid  = String(g.StudentID || g['Student ID'] || '').trim().toLowerCase();
+            var gsubj = String(g.Subject || '').trim();
+            if (gsid === sid.toLowerCase() && gsubj && found.indexOf(gsubj) === -1) {
+              found.push(gsubj);
+            }
+          });
+          rowSubjects = found.length ? found : [''];
+        }
+
+        rowSubjects.forEach(function(subject) {
+          var key = sid.toLowerCase() + '||' + subject.toLowerCase();
+          var g   = gradeIndex[key] || {};
+
+          // Build normalised key map from existing grade object
+          var existingKeys = {};
+          Object.keys(g).forEach(function(k) {
+            existingKeys[k.toLowerCase().replace(/\s+/g, '')] = g[k];
+          });
+
+          var cols = {};
+          INPUT_COLS.forEach(function(c) {
+            var normalKey = c.toLowerCase().replace(/\s+/g, '');
+            var v = existingKeys[normalKey];
+            v = String(v !== undefined ? v : '').trim();
+            cols[c] = (v === '—' || v === '') ? '' : v;
+          });
+
+          _rows.push({ idx: idx++, sid: sid, sname: sname, cls: cls, subject: subject, cols: cols });
+        });
+      });
+
+      if (!_rows.length) {
+        showMsg('warn', 'No students found for your assigned classes.');
+        return;
+      }
+
+      // Populate class dropdown
+      var classSet = {};
+      _rows.forEach(function(r){ if(r.cls) classSet[r.cls] = true; });
+      var clsSel = document.getElementById('filterClass');
+      Object.keys(classSet).sort().forEach(function(c){
+        var o = document.createElement('option'); o.value = c; o.textContent = c; clsSel.appendChild(o);
+      });
+
+      // Populate subject dropdown
+      var subjectSetUI = {};
+      _rows.forEach(function(r){ if(r.subject) subjectSetUI[r.subject] = true; });
+      var subSel = document.getElementById('filterSubject');
+      Object.keys(subjectSetUI).sort().forEach(function(s){
+        var o = document.createElement('option'); o.value = s; o.textContent = s; subSel.appendChild(o);
+      });
+
+      // Show filter bar, keep table hidden until user searches
+      document.getElementById('filterBar').style.display = 'flex';
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────
+    function renderTable(rows) {
+      if (!rows.length) {
+        showMsg('info', 'No grade records found.');
+        document.getElementById('rowCount').textContent = '';
+        return;
+      }
+      document.getElementById('rowCount').textContent = rows.length + ' row' + (rows.length!==1?'s':'');
+
+      var thead = '<tr><th>Student ID</th><th>Student Name</th><th>Class</th><th>Subject</th>';
+      INPUT_COLS.forEach(function(c) {
+        var lc    = c.toLowerCase().trim();
+        var mp    = PERIOD_RE.exec(lc);
+        var me    = EXAM_RE_DISC.exec(lc);
+        var label = mp ? 'Period ' + mp[1] : (me ? 'Exam ' + me[1] : c);
+        var isEx  = !!me;
+        thead += '<th' + (isEx ? ' class="exam-th"' : '') + '>' + label + '</th>';
+      });
+      thead += '<th>Action</th><th></th></tr>';
+
+      var tbody = rows.map(function(r) {
+        var rid = 'row-' + r.idx;
+        var cells = '';
+        INPUT_COLS.forEach(function(c) {
+          var val      = r.cols[c];
+          var hasValue = val !== '' && val !== '—';
+          var gc       = hasValue ? gClass(val) : '';
+          var locked   = hasValue ? ' locked' : '';
+          var ro       = hasValue ? ' readonly' : '';
+          var disp     = hasValue ? val : '';
+          cells += '<td class="gcell">' +
+            '<input type="number" min="0" max="100" ' +
+            'class="grade-input ' + gc + locked + '" ' +
+            'id="' + rid + '-' + c + '" ' +
+            'value="' + disp + '" ' +
+            'placeholder="—"' + ro +
+            ' oninput="onGradeInput(this,\'' + rid + '\')" />' +
+            '</td>';
+        });
+        return '<tr id="' + rid + '">' +
+          '<td class="sid">' + r.sid + '</td>' +
+          '<td class="sname">' + r.sname + '</td>' +
+          '<td class="cls">' + r.cls + '</td>' +
+          '<td class="subj">' + r.subject + '</td>' +
+          cells +
+          '<td><button class="btn-save-row" id="' + rid + '-savebtn" ' +
+          'onclick="saveRow(\'' + rid + '\',\'' + r.idx + '\')" disabled>Save</button></td>' +
+          '<td><span class="row-status" id="' + rid + '-status"></span></td>' +
+          '</tr>';
+      }).join('');
+
+      document.getElementById('tableWrap').innerHTML =
+        '<table class="gi-table"><thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
+    }
+
+    // ── Enable Save when a new value is typed ─────────────────────────────
+    function onGradeInput(input, rid) {
+      // Apply colour class live
+      input.className = 'grade-input ' + gClass(input.value);
+      // Enable save button
+      var btn = document.getElementById(rid + '-savebtn');
+      if (btn) { btn.disabled = false; btn.classList.remove('saved'); }
+      document.getElementById(rid + '-status').textContent = '';
+    }
+
+    // ── Save one row ───────────────────────────────────────────────────────
+    async function saveRow(rid, idx) {
+      var r   = _rows[idx];
+      var btn = document.getElementById(rid + '-savebtn');
+      var sta = document.getElementById(rid + '-status');
+
+      // Collect only newly-entered (non-locked) values
+      var updates = {};
+      var hasNew  = false;
+      INPUT_COLS.forEach(function(c) {
+        var inp = document.getElementById(rid + '-' + c);
+        if (!inp || inp.readOnly) return;   // skip locked fields
+        var v = inp.value.trim();
+        if (v !== '') {
+          var n = parseFloat(v);
+          if (isNaN(n) || n < 0 || n > 100) return;  // skip invalid
+          updates[c] = n;
+          hasNew = true;
+        }
+      });
+      // Also skip save if all new inputs are actually locked already
+
+
+      if (!hasNew) {
+        sta.textContent = 'Nothing to save.';
+        sta.className = 'row-status err';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.classList.add('saving');
+      btn.textContent = 'Saving…';
+      sta.textContent = '';
+
+      try {
+        var res = await apiRequest('saveGrade', {
+          studentID     : r.sid,
+          studentName   : r.sname,
+          className     : r.cls,
+          subject       : r.subject,
+          grades        : updates,
+          teacherUsername: _gradesUsername
+        });
+
+        if (res && res.ok) {
+          // Lock the newly saved inputs
+          INPUT_COLS.forEach(function(c) {
+            var inp = document.getElementById(rid + '-' + c);
+            if (!inp || inp.readOnly) return;
+            if (updates[c] !== undefined) {
+              inp.readOnly = true;
+              inp.classList.add('locked');
+              inp.classList.remove('g-red','g-blue','g-green','g-white');
+              inp.classList.add(gClass(updates[c]));
+              r.cols[c] = String(updates[c]);
+            }
+          });
+          btn.textContent = 'Saved';
+          btn.classList.remove('saving');
+          btn.classList.add('saved');
+          sta.textContent = '✓ Saved';
+          sta.className = 'row-status ok';
+        } else {
+          throw new Error(res && res.message ? res.message : 'Save failed.');
+        }
+      } catch(e) {
+        btn.disabled = false;
+        btn.classList.remove('saving');
+        btn.textContent = 'Save';
+        sta.textContent = '✗ ' + e.message;
+        sta.className = 'row-status err';
+      }
+    }
+
+    // ── Filters ────────────────────────────────────────────────────────────
+    function applyFilters() {
+      var q   = document.getElementById('gradeSearch').value.trim().toLowerCase();
+      var cls = document.getElementById('filterClass').value.toLowerCase();
+      var sub = document.getElementById('filterSubject').value.toLowerCase();
+
+      var hasFilter = q !== '' || cls !== '' || sub !== '';
+      var prompt    = document.getElementById('searchPrompt');
+      var wrap      = document.getElementById('tableWrap');
+
+      if (!hasFilter) {
+        prompt.style.display = 'flex';
+        wrap.style.display   = 'none';
+        document.getElementById('rowCount').textContent = '';
+        return;
+      }
+
+      var filtered = _rows.filter(function(r) {
+        var matchQ   = !q   || r.sid.toLowerCase().indexOf(q) !== -1 || r.sname.toLowerCase().indexOf(q) !== -1;
+        var matchCls = !cls || r.cls.toLowerCase() === cls;
+        var matchSub = !sub || r.subject.toLowerCase() === sub;
+        return matchQ && matchCls && matchSub;
+      });
+
+      prompt.style.display = 'none';
+      wrap.style.display   = 'block';
+
+      if (!filtered.length) {
+        wrap.innerHTML = '<div class="state-msg info"><span>🔍</span><span>No students match your search.</span></div>';
+        document.getElementById('rowCount').textContent = '0 rows';
+        return;
+      }
+
+      renderTable(filtered);
+    }
+  </script>
+</body>
+</html>
