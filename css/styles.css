@@ -1,1 +1,84 @@
 :root{--bg:#0b1220;--panel:#111827;--muted:#cbd5e1;--text:#f8fafc;--accent:#2563eb;--border:#1f2937}*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#07111f,#172554);color:var(--text)}.page-shell{max-width:1100px;margin:0 auto;padding:24px}.center-box{min-height:100vh;display:grid;place-items:center}.hero-card,.panel,.auth-card{background:rgba(17,24,39,.95);border:1px solid var(--border);border-radius:18px;box-shadow:0 18px 40px rgba(15,23,42,.35)}.hero-card{padding:28px}.panel{padding:24px}.eyebrow{letter-spacing:.3em;text-transform:uppercase;font-size:.75rem;color:#bfdbfe}.lead,.muted{color:var(--muted)}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.stack{display:grid;gap:12px}.btn{display:inline-block;padding:12px 14px;border-radius:10px;border:1px solid var(--border);text-decoration:none;font-weight:700}.btn-primary{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff}.btn-secondary{background:#111827;color:#fff}.cta-row{display:flex;gap:10px;flex-wrap:wrap}input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#0b1220;color:var(--text)}label{display:grid;gap:8px}h1,h2{margin-top:0}.report-card{min-height:60vh}@media (max-width:880px){.grid-2{grid-template-columns:1fr}}
+/* ══════════════════════════════════════════════
+   GLOBAL MOBILE RESPONSIVE — applies to all pages
+   ══════════════════════════════════════════════ */
+
+/* Fluid padding on page shell */
+@media (max-width: 768px) {
+  .page-shell { padding: 14px 12px; }
+
+  /* Typography scale down */
+  h1 { font-size: 1.25rem !important; }
+  h2 { font-size: 1rem !important; }
+
+  /* Panels */
+  .panel { padding: 16px 14px; }
+  .hero-card { padding: 20px 16px; }
+
+  /* Grid: single column */
+  .grid-2 { grid-template-columns: 1fr; }
+  .page-grid { grid-template-columns: 1fr !important; }
+  .two-col { grid-template-columns: 1fr !important; }
+
+  /* Buttons row wraps */
+  .cta-row { flex-direction: column; }
+  .btn { width: 100%; text-align: center; box-sizing: border-box; }
+
+  /* Top nav: wrap and shrink */
+  .top-nav { gap: 6px; }
+  .nav-btn { padding: 7px 12px !important; font-size: 0.78rem !important; }
+
+  /* Profile bar */
+  .profile-bar { gap: 10px; }
+  .profile-bar img,
+  .profile-bar .no-photo { width: 48px !important; height: 48px !important; font-size: 1.4rem !important; }
+
+  /* Filter bars and search bars: stack on small screens */
+  .filter-bar,
+  .search-bar,
+  .grade-filter-bar { gap: 8px; }
+  .filter-bar select,
+  .filter-bar input,
+  .search-bar select,
+  .grade-filter-bar select,
+  .grade-filter-bar input { min-width: 0 !important; width: 100%; flex: 1 1 calc(50% - 4px); }
+
+  /* Tables: horizontal scroll */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 480px; }
+
+  /* Stat grid: 2 columns on mobile */
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+  .stat-card .stat-value { font-size: 1.5rem !important; }
+
+  /* Page header row: stack */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  /* dash-panel */
+  .dash-panel { padding: 16px 14px; }
+
+  /* Login card */
+  .login-card { padding: 28px 18px 24px !important; max-width: 100% !important; }
+}
+
+@media (max-width: 480px) {
+  .page-shell { padding: 10px 8px; }
+
+  .filter-bar select,
+  .filter-bar input,
+  .search-bar select,
+  .grade-filter-bar select,
+  .grade-filter-bar input { flex: 1 1 100%; }
+
+  .stat-grid { grid-template-columns: 1fr 1fr !important; }
+
+  .nav-btn { padding: 6px 10px !important; font-size: 0.73rem !important; }
+
+  /* Period pills wrap on mobile */
+  #periodPills { gap: 5px; }
+  .period-pill { padding: 5px 10px; font-size: 0.75rem; }
+}
