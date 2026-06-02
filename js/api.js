@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbzN9HD8ptRSigKuWGR4-cdRbMr4CxAVea-D5Soe9Kye_41eTYIj95zUgxBsH0H2UTur/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyGkzgEbrlyRCLjlFug9xv8dYMekqC-3LiuLkfDO5Kj7k-FlWXOBh4gFqpKQgYn7msg/exec';
 
 async function apiRequest(action, data = {}) {
   // Send as form-encoded. Apps Script reads e.parameter reliably for all fields.

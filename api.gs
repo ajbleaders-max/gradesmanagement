@@ -247,6 +247,8 @@ function updateStudent(data) {
   const classValue = String(data.className || data.studentClass || "").trim();
   const academicYear = String(data.academicYear || "").trim();
   if (!studentID) return jsonResponse(false, "Student ID is required.");
+
+  // --- Update STUDENTS sheet ---
   const sheet =
     SpreadsheetApp.getActiveSpreadsheet().getSheetByName("STUDENTS");
   if (!sheet) return jsonResponse(false, "STUDENTS sheet not found.");
@@ -260,6 +262,42 @@ function updateStudent(data) {
   if (classValue) row[3] = classValue;
   if (academicYear) row[4] = academicYear;
   sheet.getRange(index + 2, 1, 1, row.length).setValues([row]);
+
+  // --- Sync StudentName and Class changes to GRADES sheet ---
+  if (fullName || classValue) {
+    const gradesSheet =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName("GRADES");
+    if (gradesSheet) {
+      const lastRow = gradesSheet.getLastRow();
+      if (lastRow > 1) {
+        const lastCol = gradesSheet.getLastColumn();
+        const gRows = gradesSheet.getRange(1, 1, lastRow, lastCol).getValues();
+        const gHeaders = gRows[0].map(function (h) {
+          return String(h).trim().toLowerCase().replace(/\s+/g, "");
+        });
+        const sidCol = gHeaders.indexOf("studentid");
+        const nameCol = gHeaders.indexOf("studentname");
+        const classCol = gHeaders.indexOf("class");
+        if (sidCol >= 0) {
+          for (var i = 1; i < gRows.length; i++) {
+            if (
+              String(gRows[i][sidCol] || "")
+                .trim()
+                .toLowerCase() === studentID.toLowerCase()
+            ) {
+              if (fullName && nameCol >= 0) {
+                gradesSheet.getRange(i + 1, nameCol + 1).setValue(fullName);
+              }
+              if (classValue && classCol >= 0) {
+                gradesSheet.getRange(i + 1, classCol + 1).setValue(classValue);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   return jsonResponse(true, "Student updated.");
 }
 
