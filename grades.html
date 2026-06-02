@@ -95,23 +95,29 @@
     .grade-input.g-green { color:#4ade80 !important; }
     .grade-input.g-white { color:#f8fafc !important; }
 
-    /* Save row button */
-    .btn-save-row {
-      padding:5px 14px; border-radius:8px; font-size:0.78rem; font-weight:700;
+    /* Save All button */
+    .btn-save-all {
+      padding:8px 24px; border-radius:10px; font-size:0.85rem; font-weight:700;
       background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3);
       color:#86efac; cursor:pointer;
       transition:background 0.18s, border-color 0.18s;
       white-space:nowrap;
     }
-    .btn-save-row:hover:not(:disabled) { background:rgba(34,197,94,0.3); border-color:#22c55e; }
-    .btn-save-row:disabled { opacity:0.4; cursor:not-allowed; }
-    .btn-save-row.saving  { opacity:0.6; cursor:wait; }
-    .btn-save-row.saved   { background:rgba(34,197,94,0.08); color:#4ade80; border-color:rgba(34,197,94,0.15); }
+    .btn-save-all:hover:not(:disabled) { background:rgba(34,197,94,0.3); border-color:#22c55e; }
+    .btn-save-all:disabled { opacity:0.4; cursor:not-allowed; }
+    .btn-save-all.saving  { opacity:0.6; cursor:wait; }
 
-    /* Status dot next to button */
+    /* Row status (inline per row) */
     .row-status { font-size:0.75rem; white-space:nowrap; }
     .row-status.ok  { color:#4ade80; }
     .row-status.err { color:#f87171; }
+
+    /* Save All bar */
+    .save-all-bar {
+      display:flex; align-items:center; justify-content:flex-end; gap:12px;
+      margin-bottom:10px;
+    }
+    #saveAllStatus { font-size:0.8rem; }
 
     /* Empty / loading states */
     .state-msg {
@@ -125,6 +131,61 @@
 
     /* Exam column header accent */
     th.exam-th { color:#f472b6; }
+
+    /* ── Period / Exam pill buttons ── */
+    .period-pill {
+      display:inline-flex; align-items:center;
+      padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:700;
+      border:1px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.05); color:#64748b;
+      cursor:not-allowed; user-select:none;
+      transition:background 0.15s, border-color 0.15s, color 0.15s;
+      white-space:nowrap;
+    }
+    .period-pill.enabled {
+      background:rgba(37,99,235,0.12); color:#93c5fd;
+      border-color:rgba(37,99,235,0.3); cursor:pointer;
+    }
+    .period-pill.enabled:hover {
+      background:rgba(37,99,235,0.22); border-color:rgba(37,99,235,0.5);
+    }
+    .period-pill.selected {
+      background:rgba(37,99,235,0.35); color:#bfdbfe;
+      border-color:#2563eb; cursor:pointer;
+    }
+    .period-pill.exam-pill.enabled {
+      background:rgba(244,114,182,0.1); color:#f9a8d4;
+      border-color:rgba(244,114,182,0.3);
+    }
+    .period-pill.exam-pill.enabled:hover {
+      background:rgba(244,114,182,0.22); border-color:rgba(244,114,182,0.5);
+    }
+    .period-pill.exam-pill.selected {
+      background:rgba(244,114,182,0.3); color:#fce7f3;
+      border-color:#f472b6;
+    }
+
+    /* ── MOBILE RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .page-shell { padding: 12px 10px; }
+      .top-nav { gap: 6px; }
+      .nav-btn { padding: 7px 12px; font-size: 0.78rem; }
+      .search-bar input { min-width: 0; }
+      .search-bar select { min-width: 0; }
+      .search-bar input,
+      .search-bar select { width: 100%; flex: 1 1 calc(50% - 5px); }
+      .gi-table th, .gi-table td { padding: 5px 6px; font-size: 0.78rem; }
+      .grade-input { width: 46px; font-size: 0.78rem; padding: 4px 2px; }
+      .panel { padding: 14px 10px; }
+      .save-all-bar { justify-content: flex-start; }
+      .btn-save-all { width: 100%; text-align: center; }
+      /* header row stack */
+      .page-shell > div:first-child { flex-direction: column !important; align-items: flex-start !important; }
+    }
+    @media (max-width: 480px) {
+      .search-bar input,
+      .search-bar select { flex: 1 1 100%; }
+    }
   </style>
 </head>
 <body>
@@ -162,8 +223,17 @@
         </select>
         <span class="result-count" id="rowCount"></span>
       </div>
+      <!-- Period / Exam pill buttons -->
+      <div id="periodPillsWrap" style="display:none; margin-bottom:14px;">
+        <div style="font-size:0.75rem; color:#64748b; margin-bottom:7px; letter-spacing:0.04em; text-transform:uppercase;">Columns &mdash; select one or more &nbsp;<span id="periodLockNote" style="color:#f87171; font-style:italic;">(select a Class &amp; Subject first)</span></div>
+        <div id="periodPills" style="display:flex; flex-wrap:wrap; gap:7px;"></div>
+      </div>
       <div id="searchPrompt" class="state-msg info" style="margin-bottom:0;">
         <span>🔍</span><span>Use the filters above to search for a student or select a class / subject to begin.</span>
+      </div>
+      <div class="save-all-bar" id="saveAllBar" style="display:none;">
+        <span id="saveAllStatus"></span>
+        <button class="btn-save-all" id="saveAllBtn" onclick="saveAllRows()">💾 Save All</button>
       </div>
       <div class="table-scroll" id="tableWrap" style="display:none;">
         <div class="state-msg info"><span>⏳</span><span>Loading students and grades…</span></div>
@@ -202,8 +272,44 @@
     }
     var EXAM_RE    = /^exam\d+$/i;
 
-    var _rows = [];   // flat array of objects built from API data
+    var _rows = [];            // flat array of objects built from API data
+    var _selectedPills = [];   // currently selected period/exam col keys
     var _gradesUsername = '';
+
+    // ── Period pill helpers ────────────────────────────────────────────────
+    function updatePillEnableState() {
+      var cls = document.getElementById('filterClass').value;
+      var sub = document.getElementById('filterSubject').value;
+      var canEnable = cls !== '' && sub !== '';
+      var lockNote  = document.getElementById('periodLockNote');
+      if (lockNote) lockNote.style.display = canEnable ? 'none' : 'inline';
+      var pills = document.querySelectorAll('.period-pill');
+      pills.forEach(function(p) {
+        if (canEnable) {
+          p.disabled = false;
+          p.classList.add('enabled');
+        } else {
+          p.disabled = true;
+          p.classList.remove('enabled', 'selected');
+        }
+      });
+      if (!canEnable) {
+        _selectedPills = [];
+      }
+    }
+
+    function togglePill(btn) {
+      var col = btn.dataset.col;
+      var idx = _selectedPills.indexOf(col);
+      if (idx === -1) {
+        _selectedPills.push(col);
+        btn.classList.add('selected');
+      } else {
+        _selectedPills.splice(idx, 1);
+        btn.classList.remove('selected');
+      }
+      applyFilters();
+    }
 
     // ── Refresh button ─────────────────────────────────────────────────────
     function refreshGrades() {
@@ -213,6 +319,7 @@
       var savedSearch  = document.getElementById('gradeSearch')  ? document.getElementById('gradeSearch').value  : '';
       var savedClass   = document.getElementById('filterClass')   ? document.getElementById('filterClass').value   : '';
       var savedSubject = document.getElementById('filterSubject') ? document.getElementById('filterSubject').value : '';
+      var savedPills   = _selectedPills.slice();
 
       apiRequest('getTeacherData', { username: _gradesUsername }).then(function(res) {
         if (res && res.ok) {
@@ -223,7 +330,9 @@
           if (document.getElementById('gradeSearch'))  document.getElementById('gradeSearch').value  = savedSearch;
           if (document.getElementById('filterClass'))   document.getElementById('filterClass').value   = savedClass;
           if (document.getElementById('filterSubject')) document.getElementById('filterSubject').value = savedSubject;
-          if (savedSearch || savedClass || savedSubject) applyFilters();
+          _selectedPills = savedPills;
+          updatePillEnableState();
+          if (savedSearch || savedClass || savedSubject || _selectedPills.length) applyFilters();
         }
       }).catch(function(){}).finally(function(){
         if (btn) { btn.textContent = '🔄 Refresh'; btn.disabled = false; }
@@ -269,6 +378,8 @@
       }
       var wrap = document.getElementById('tableWrap');
       if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; }
+      var bar = document.getElementById('saveAllBar');
+      if (bar) bar.style.display = 'none';
     }
 
     // ── Build table ────────────────────────────────────────────────────────
@@ -372,12 +483,37 @@
         var o = document.createElement('option'); o.value = s; o.textContent = s; subSel.appendChild(o);
       });
 
+      // Build period/exam pill buttons
+      var pillsWrap = document.getElementById('periodPillsWrap');
+      var pillsContainer = document.getElementById('periodPills');
+      pillsContainer.innerHTML = '';
+      _selectedPills = [];   // reset selections
+      INPUT_COLS.forEach(function(c) {
+        var lc = c.toLowerCase().trim();
+        var mp = PERIOD_RE.exec(lc);
+        var me = EXAM_RE_DISC.exec(lc);
+        if (!mp && !me) return;
+        var label = mp ? 'Period ' + mp[1] : 'Exam ' + me[1];
+        var isExam = !!me;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'period-pill' + (isExam ? ' exam-pill' : '');
+        btn.textContent = label;
+        btn.dataset.col = c;
+        btn.disabled = true;
+        btn.addEventListener('click', function() { togglePill(this); });
+        pillsContainer.appendChild(btn);
+      });
+      if (pillsContainer.children.length > 0) {
+        pillsWrap.style.display = 'block';
+      }
+
       // Show filter bar, keep table hidden until user searches
       document.getElementById('filterBar').style.display = 'flex';
     }
 
     // ── Render ─────────────────────────────────────────────────────────────
-    function renderTable(rows) {
+    function renderTable(rows, selectedPills) {
       if (!rows.length) {
         showMsg('info', 'No grade records found.');
         document.getElementById('rowCount').textContent = '';
@@ -385,8 +521,13 @@
       }
       document.getElementById('rowCount').textContent = rows.length + ' row' + (rows.length!==1?'s':'');
 
-      var thead = '<tr><th>Student ID</th><th>Student Name</th><th>Class</th><th>Subject</th>';
-      INPUT_COLS.forEach(function(c) {
+      // If specific pills selected, show only those columns; else show all INPUT_COLS
+      var displayCols = (selectedPills && selectedPills.length)
+        ? INPUT_COLS.filter(function(c){ return selectedPills.indexOf(c) !== -1; })
+        : INPUT_COLS;
+
+      var thead = '<tr><th>Student Name</th>';
+      displayCols.forEach(function(c) {
         var lc    = c.toLowerCase().trim();
         var mp    = PERIOD_RE.exec(lc);
         var me    = EXAM_RE_DISC.exec(lc);
@@ -394,12 +535,12 @@
         var isEx  = !!me;
         thead += '<th' + (isEx ? ' class="exam-th"' : '') + '>' + label + '</th>';
       });
-      thead += '<th>Action</th><th></th></tr>';
+      thead += '<th></th></tr>';
 
       var tbody = rows.map(function(r) {
         var rid = 'row-' + r.idx;
         var cells = '';
-        INPUT_COLS.forEach(function(c) {
+        displayCols.forEach(function(c) {
           var val      = r.cols[c];
           var hasValue = val !== '' && val !== '—';
           var gc       = hasValue ? gClass(val) : '';
@@ -416,19 +557,16 @@
             '</td>';
         });
         return '<tr id="' + rid + '">' +
-          '<td class="sid">' + r.sid + '</td>' +
           '<td class="sname">' + r.sname + '</td>' +
-          '<td class="cls">' + r.cls + '</td>' +
-          '<td class="subj">' + r.subject + '</td>' +
           cells +
-          '<td><button class="btn-save-row" id="' + rid + '-savebtn" ' +
-          'onclick="saveRow(\'' + rid + '\',\'' + r.idx + '\')" disabled>Save</button></td>' +
           '<td><span class="row-status" id="' + rid + '-status"></span></td>' +
           '</tr>';
       }).join('');
 
       document.getElementById('tableWrap').innerHTML =
         '<table class="gi-table"><thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
+      // Show Save All button
+      document.getElementById('saveAllBar').style.display = 'flex';
     }
 
     // ── Enable Save when a new value is typed ─────────────────────────────
@@ -515,12 +653,97 @@
       }
     }
 
+    // ── Save All Rows ──────────────────────────────────────────────────────
+    async function saveAllRows() {
+      var btn = document.getElementById('saveAllBtn');
+      var statusEl = document.getElementById('saveAllStatus');
+      btn.disabled = true;
+      btn.textContent = '⏳ Saving…';
+      statusEl.textContent = '';
+
+      var trs = document.querySelectorAll('#tableWrap tbody tr');
+      var pending = [];
+
+      trs.forEach(function(tr) {
+        var rid = tr.id;
+        if (!rid) return;
+        var idxNum = parseInt(rid.replace('row-', ''), 10);
+        var r = _rows[idxNum];
+        if (!r) return;
+
+        var updates = {};
+        var hasNew  = false;
+        INPUT_COLS.forEach(function(c) {
+          var inp = document.getElementById(rid + '-' + c);
+          if (!inp || inp.readOnly) return;
+          var v = inp.value.trim();
+          if (v !== '') {
+            var n = parseFloat(v);
+            if (!isNaN(n) && n >= 0 && n <= 100) { updates[c] = n; hasNew = true; }
+          }
+        });
+        if (hasNew) pending.push({ rid: rid, r: r, updates: updates });
+      });
+
+      if (!pending.length) {
+        btn.disabled = false;
+        btn.textContent = '💾 Save All';
+        statusEl.textContent = 'Nothing new to save.';
+        statusEl.style.color = '#94a3b8';
+        return;
+      }
+
+      var saved = 0, failed = 0;
+      for (var i = 0; i < pending.length; i++) {
+        var item = pending[i];
+        var sta = document.getElementById(item.rid + '-status');
+        try {
+          var res = await apiRequest('saveGrade', {
+            studentID      : item.r.sid,
+            studentName    : item.r.sname,
+            className      : item.r.cls,
+            subject        : item.r.subject,
+            grades         : item.updates,
+            teacherUsername: _gradesUsername
+          });
+          if (res && res.ok) {
+            INPUT_COLS.forEach(function(c) {
+              var inp = document.getElementById(item.rid + '-' + c);
+              if (!inp || inp.readOnly) return;
+              if (item.updates[c] !== undefined) {
+                inp.readOnly = true;
+                inp.classList.add('locked');
+                inp.classList.remove('g-red','g-blue','g-green','g-white');
+                inp.classList.add(gClass(item.updates[c]));
+                item.r.cols[c] = String(item.updates[c]);
+              }
+            });
+            if (sta) { sta.textContent = '✓'; sta.className = 'row-status ok'; }
+            saved++;
+          } else { throw new Error(res && res.message ? res.message : 'Failed'); }
+        } catch(e) {
+          if (sta) { sta.textContent = '✗'; sta.className = 'row-status err'; }
+          failed++;
+        }
+      }
+
+      btn.disabled = false;
+      btn.textContent = '💾 Save All';
+      if (failed === 0) {
+        statusEl.textContent = '✓ ' + saved + ' saved';
+        statusEl.style.color = '#4ade80';
+      } else {
+        statusEl.textContent = saved + ' saved, ' + failed + ' failed';
+        statusEl.style.color = '#f87171';
+      }
+    }
+
     // ── Filters ────────────────────────────────────────────────────────────
     function applyFilters() {
-      var q   = document.getElementById('gradeSearch').value.trim().toLowerCase();
-      var cls = document.getElementById('filterClass').value.toLowerCase();
-      var sub = document.getElementById('filterSubject').value.toLowerCase();
-
+      updatePillEnableState();
+      var q      = document.getElementById('gradeSearch').value.trim().toLowerCase();
+      var cls    = document.getElementById('filterClass').value.toLowerCase();
+      var sub    = document.getElementById('filterSubject').value.toLowerCase();
       var hasFilter = q !== '' || cls !== '' || sub !== '';
       var prompt    = document.getElementById('searchPrompt');
       var wrap      = document.getElementById('tableWrap');
@@ -529,6 +752,7 @@
         prompt.style.display = 'flex';
         wrap.style.display   = 'none';
         document.getElementById('rowCount').textContent = '';
+        document.getElementById('saveAllBar').style.display = 'none';
         return;
       }
 
@@ -545,10 +769,11 @@
       if (!filtered.length) {
         wrap.innerHTML = '<div class="state-msg info"><span>🔍</span><span>No students match your search.</span></div>';
         document.getElementById('rowCount').textContent = '0 rows';
+        document.getElementById('saveAllBar').style.display = 'none';
         return;
       }
 
-      renderTable(filtered);
+      renderTable(filtered, _selectedPills);
     }
   </script>
 </body>

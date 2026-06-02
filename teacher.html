@@ -123,7 +123,7 @@
 <body>
   <main class="page-shell">
 
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+    <div class="dash-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
       <div class="profile-bar">
         <div id="teacherPhotoWrap"><div class="no-photo">&#128100;</div></div>
         <div class="profile-info">
@@ -517,15 +517,7 @@
         '<table class="grade-table"><thead>' + _headerHtml + '</thead><tbody>' + buildGradeRows(visible) + '</tbody></table>';
 
       var gf = document.getElementById('gradeFooter');
-      if (gf) {
-        var remaining = filtered.length - visible.length;
-        if (!isFiltering && remaining > 0) {
-          gf.innerHTML = '<button class="load-more-btn" onclick="showAllGrades()">Show all ' + filtered.length + ' rows (' + remaining + ' more)</button>';
-          gf.style.display = 'block';
-        } else {
-          gf.style.display = 'none';
-        }
-      }
+      if (gf) { gf.style.display = 'none'; }
     }
 
     window.showAllGrades = function() {
@@ -584,15 +576,7 @@
           ? 'Showing ' + visible.length + ' of ' + students.length + ' students'
           : 'All ' + students.length + ' student' + (students.length !== 1 ? 's' : '');
       }
-      if (footerEl) {
-        var rem = students.length - visible.length;
-        if (rem > 0) {
-          footerEl.innerHTML = '<button class="load-more-btn" onclick="showAllMyStudents()">Show all ' + students.length + ' students (' + rem + ' more)</button>';
-          footerEl.style.display = 'block';
-        } else {
-          footerEl.style.display = 'none';
-        }
-      }
+      if (footerEl) { footerEl.style.display = 'none'; }
     }
 
     window.showAllMyStudents = function() {
@@ -617,6 +601,34 @@
   <style>
     .load-more-btn { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; padding: 8px 22px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: background 0.2s; margin-top:4px; }
     .load-more-btn:hover { background: rgba(99,102,241,0.25); }
+
+    /* ── MOBILE RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .page-shell { padding: 12px 10px; }
+      .dash-header { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+      .profile-bar { gap: 10px; margin-bottom: 10px; }
+      .profile-bar img, .profile-bar .no-photo { width: 46px; height: 46px; font-size: 1.3rem; }
+      .profile-bar .profile-info h1 { font-size: 1.05rem; }
+      .top-nav { gap: 6px; }
+      .nav-btn { padding: 7px 12px; font-size: 0.78rem; }
+      .grade-filter-bar { gap: 8px; }
+      .grade-filter-bar input { min-width: 0; width: 100%; }
+      .grade-filter-bar select { min-width: 0; width: 100%; }
+      .grade-count { margin-left: 0; }
+      .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .grade-table th, .grade-table td { padding: 6px 7px; font-size: 0.78rem; }
+      table th, table td { padding: 6px 7px; font-size: 0.8rem; }
+      .panel { padding: 14px 10px; margin-top: 12px; }
+      .subject-tags { gap: 5px; }
+      .subject-tag { font-size: 0.68rem; padding: 2px 7px; }
+      #quoteCard { padding: 10px 14px 10px 16px; }
+      #teacherQuote { font-size: 0.78rem; }
+      #myStudentSearch { font-size: 0.8rem !important; }
+    }
+    @media (max-width: 480px) {
+      .grade-filter-bar input,
+      .grade-filter-bar select { flex: 1 1 100%; }
+    }
   </style>
 </body>
 </html>
