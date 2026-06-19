@@ -214,14 +214,22 @@
     /* ── Footer ── */
     .rc-footer {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: flex-start;
+  gap: 28px;
   margin-top: 18px;
-  gap: 16px;
 }
     .rc-grading-key { font-size:0.7rem; color:#64748b; font-family:Arial,sans-serif; }
     .rc-grading-key strong { color:#94a3b8; display:block; margin-bottom:4px; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; }
     .rc-grading-key span   { display:block; line-height:1.7; }
+    .rc-promotion { font-size:0.7rem; color:#64748b; font-family:Arial,sans-serif; max-width:280px; }
+.rc-promotion strong { color:#94a3b8; display:block; margin-bottom:4px; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; }
+.rc-promotion p { margin:0 0 6px; line-height:1.6; }
+.rc-promotion .fill-line { display:inline-block; border-bottom:1px solid rgba(255,255,255,0.25); min-width:90px; padding:0 3px; color:#f1f5f9; font-weight:600; }
+.rc-promotion .fill-line.short { min-width:50px; }
+.promo-option { display:flex; align-items:baseline; gap:6px; line-height:1.6; }
+.promo-option .chk { font-size:0.85rem; }
     .rc-motto {
   font-size: 0.72rem;
   color: #64748b;
@@ -312,6 +320,9 @@
       /* Footer */
       .rc-grading-key        { color:#444 !important; }
       .rc-grading-key strong { color:#333 !important; }
+      .rc-promotion            { color:#444 !important; }
+.rc-promotion strong     { color:#333 !important; }
+.rc-promotion .fill-line { border-bottom:1px solid #333 !important; color:#000 !important; }
       .rc-motto              { color:#444 !important; }
       .rc-motto strong       { color:#92400e !important; }
       .sig-line  { border-bottom:1px solid #333 !important; }
