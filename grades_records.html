@@ -218,10 +218,15 @@
       margin-top: 18px;
       gap: 16px;
     }
-    .rc-grading-key { font-size:0.7rem; color:#64748b; font-family:Arial,sans-serif; }
+    .rc-grading-key { font-size:0.7rem; color:#64748b; font-family:Arial,sans-serif; width:100%; }
     .rc-grading-key strong { color:#94a3b8; display:block; margin-bottom:6px; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; }
-    .rc-grading-key .key-row { display:flex; flex-wrap:wrap; gap:14px; }
-    .rc-grading-key .key-row span { display:inline-block; line-height:1.5; white-space:nowrap; }
+    .rc-grading-key .key-row {
+      display:flex;
+      flex-wrap:nowrap;       /* force everything onto ONE line, left to right */
+      gap:18px;
+      overflow-x:auto;        /* scroll instead of wrap if it ever gets too tight */
+    }
+    .rc-grading-key .key-row span { display:inline-block; line-height:1.5; white-space:nowrap; flex-shrink:0; }
     .rc-motto {
       font-size: 0.72rem;
       color: #64748b;
@@ -312,6 +317,7 @@
       /* Footer */
       .rc-grading-key        { color:#444 !important; }
       .rc-grading-key strong { color:#333 !important; }
+      .rc-grading-key .key-row { flex-wrap:nowrap !important; overflow:visible !important; gap:14px !important; }
       .rc-motto              { color:#444 !important; }
       .rc-motto strong       { color:#92400e !important; }
       .sig-line  { border-bottom:1px solid #333 !important; }
