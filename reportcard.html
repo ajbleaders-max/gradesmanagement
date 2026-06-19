@@ -774,19 +774,27 @@
 
       /* Footer */
       '<div class="rc-footer">' +
-        '<div class="rc-grading-key">' +
-          '<strong>Grading Method</strong>' +
-          '<span>A &nbsp;95 – 100 = Excellent</span>' +
-          '<span>B &nbsp;90 – 94 &nbsp;= Very Good</span>' +
-          '<span>C &nbsp;80 – 89 &nbsp;= Good</span>' +
-          '<span>D &nbsp;70 – 79 &nbsp;= Average</span>' +
-          '<span>E &nbsp;Below 70 = Poor</span>' +
-        '</div>' +
-        '<div class="rc-motto">' +
-          '<strong>Motto</strong>' +
-          'Creating New Generation of Excellence' +
-        '</div>' +
-      '</div>' +
+  '<div class="rc-grading-key">' +
+    '<strong>Grading Method</strong>' +
+    '<span>A &nbsp;95 – 100 = Excellent</span>' +
+    '<span>B &nbsp;90 – 94 &nbsp;= Very Good</span>' +
+    '<span>C &nbsp;80 – 89 &nbsp;= Good</span>' +
+    '<span>D &nbsp;70 – 79 &nbsp;= Average</span>' +
+    '<span>E &nbsp;Below 70 = Poor</span>' +
+  '</div>' +
+  '<div class="rc-promotion">' +
+    '<strong>Promotion Statement</strong>' +
+    '<p>This certifies that <span class="fill-line">'+esc(stu.name)+'</span> has / has not satisfactorily completed the work of Grade <span class="fill-line short">'+esc(stu.cls)+'</span> and is:</p>' +
+    '<div class="promo-option"><span class="chk">☐</span> A. Promoted to Grade <span class="fill-line short">&nbsp;</span></div>' +
+    '<div class="promo-option"><span class="chk">☐</span> B. Conditioned in <span class="fill-line short">&nbsp;</span></div>' +
+    '<div class="promo-option"><span class="chk">☐</span> C. Required to repeat the grade.</div>' +
+    '<div class="promo-option"><span class="chk">☐</span> D. Asked not to enroll next year.</div>' +
+  '</div>' +
+  '<div class="rc-motto">' +
+    '<strong>Motto</strong>' +
+    'Creating New Generation of Excellence' +
+  '</div>' +
+'</div>' +
 
       /* Signatures */
       '<div class="rc-sig-row">' +
