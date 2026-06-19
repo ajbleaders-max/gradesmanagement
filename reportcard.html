@@ -78,11 +78,16 @@
 
     .rc-wrapper {
       background:rgba(17,24,39,0.97);
-      border:1px solid rgba(255,255,255,0.08);
-      border-radius:14px;
+
+      /* Full report card border */
+      border:4px solid #000;
+
+      border-radius:0;
       padding:28px 28px 24px;
-      font-family: 'Georgia', serif;
-    }
+      font-family:'Georgia', serif;
+
+      box-sizing:border-box;
+}
 
     /* ── School header (screen) ── */
     .rc-school-hdr {
@@ -113,10 +118,15 @@
       z-index:0;
     }
     .rc-wrapper > *:not(.rc-watermark) { position:relative; z-index:1; }
-    .rc-school-hdr .sch-name {
-      font-size:1.3rem; font-weight:900; color:#f1f5f9;
-      letter-spacing:0.04em; margin:0 0 3px;
-    }
+    .rc-school-hdr .sch-name{
+    font-family: Algerian, serif;
+    font-size: 30px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+    width: 100%;
+}
     .rc-school-hdr .sch-sub {
       font-size:0.72rem; color:#64748b; margin:0; font-family:Arial,sans-serif;
     }
@@ -262,6 +272,12 @@
       .rc-grade-table .g-none  { color:#94a3b8 !important; }
       ::-webkit-scrollbar { display:none; }
 
+        .rc-wrapper{
+      border:4px solid #000 !important;
+      border-radius:0 !important;
+  }
+
+      
       .page-header, .filter-bar, #filterBar,
       .btn-print, .btn-refresh, .top-nav, #stateMsg,
       .result-count { display:none !important; }
