@@ -262,13 +262,6 @@
     /* ══════════════════════════════════════════
        PRINT
     ══════════════════════════════════════════ */
-@media print {
-  .rc-wrapper{
-      border:4px solid #FFC200 !important;
-      border-radius:0 !important;
-  }
-}
-    
     @media print {
       * { print-color-adjust:exact !important; -webkit-print-color-adjust:exact !important; }
       html, body { background:#fff !important; color:#222 !important; }
@@ -289,11 +282,17 @@
       #reportList { gap:0; }
 
       .rc-wrapper {
-        break-before:page; break-inside:avoid;
-        background:#fff !important; border:none !important;
-        border-radius:0 !important; padding:16px 20px 14px !important;
-        box-shadow:none !important; position:relative !important;
-      }
+    break-before:page;
+    break-inside:avoid;
+    background:#fff !important;
+
+    border:4px solid #FFC200 !important;
+
+    border-radius:0 !important;
+    padding:16px 20px 14px !important;
+    box-shadow:none !important;
+    position:relative !important;
+}
       .rc-watermark {
         opacity:0.10 !important;
       }
@@ -346,7 +345,7 @@
       .sig-label { color:#555 !important; }
       .rc-sig-row { border-top:1px solid #ddd !important; }
     }
-  </style>
+  </style> 
 </head>
 <body>
 <main class="page-shell">
