@@ -213,16 +213,22 @@
 
     /* ── Footer ── */
     .rc-footer {
-      display:flex; justify-content:space-between; align-items:flex-start;
-      margin-top:18px; flex-wrap:wrap; gap:16px;
-    }
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 18px;
+  gap: 16px;
+}
     .rc-grading-key { font-size:0.7rem; color:#64748b; font-family:Arial,sans-serif; }
     .rc-grading-key strong { color:#94a3b8; display:block; margin-bottom:4px; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; }
     .rc-grading-key span   { display:block; line-height:1.7; }
     .rc-motto {
-      font-size:0.72rem; color:#64748b; text-align:right;
-      font-family:Arial,sans-serif; font-style:italic;
-    }
+  font-size: 0.72rem;
+  color: #64748b;
+  text-align: left;   /* was right */
+  font-family: Arial, sans-serif;
+  font-style: italic;
+}
     .rc-motto strong { display:block; color:#fbbf24; font-style:normal; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:3px; }
 
     /* ── Signature line ── */
