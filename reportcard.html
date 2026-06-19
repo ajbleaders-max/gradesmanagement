@@ -262,6 +262,13 @@
     /* ══════════════════════════════════════════
        PRINT
     ══════════════════════════════════════════ */
+@media print {
+  .rc-wrapper{
+      border:4px solid #FFC200 !important;
+      border-radius:0 !important;
+  }
+}
+    
     @media print {
       * { print-color-adjust:exact !important; -webkit-print-color-adjust:exact !important; }
       html, body { background:#fff !important; color:#222 !important; }
@@ -272,12 +279,6 @@
       .rc-grade-table .g-none  { color:#94a3b8 !important; }
       ::-webkit-scrollbar { display:none; }
 
-        .rc-wrapper{
-      border:4px solid #000 !important;
-      border-radius:0 !important;
-  }
-
-      
       .page-header, .filter-bar, #filterBar,
       .btn-print, .btn-refresh, .top-nav, #stateMsg,
       .result-count { display:none !important; }
