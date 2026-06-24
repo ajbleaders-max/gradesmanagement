@@ -78,6 +78,7 @@ function buildStudentRow(s, i) {
       '</div>' +
     '</div>' +
     '<div class="s-actions">' +
+      '<button class="act-btn act-edit" onclick="openStudentProfile(\'' + id.replace(/'/g,"\\'") + '\')">👁️ Profile</button>' +
       '<button class="act-btn act-edit" onclick="openStudentEdit(\'' + id.replace(/'/g,"\\'") + '\')">✏️ Edit</button>' +
       '<button class="act-btn act-delete" onclick="openDeleteStudentModal(\'' + id.replace(/'/g,"\\'") + '\',\'' + name.replace(/'/g,"\\'") + '\')">🗑️ Delete</button>' +
     '</div>' +
@@ -127,12 +128,17 @@ function filterStudents() {
 // ── Add student ───────────────────────────────────────────────────────────
 
 window.submitAddStudent = async function() {
-  var studentId    = document.getElementById('studentId').value.trim();
-  var fullName     = document.getElementById('studentFullName').value.trim();
-  var gender       = document.getElementById('studentGender').value;
-  var className    = document.getElementById('studentClass').value;
-  var academicYear = document.getElementById('studentYear').value.trim();
-  var msg          = document.getElementById('studentMessage');
+  var studentId        = document.getElementById('studentId').value.trim();
+  var fullName         = document.getElementById('studentFullName').value.trim();
+  var gender           = document.getElementById('studentGender').value;
+  var className        = document.getElementById('studentClass').value;
+  var academicYear     = document.getElementById('studentYear').value.trim();
+  var dateOfBirth      = document.getElementById('studentDateOfBirth').value;
+  var parentName       = document.getElementById('studentParentName').value.trim();
+  var parentPhone      = document.getElementById('studentParentPhone').value.trim();
+  var address          = document.getElementById('studentAddress').value.trim();
+  var enrollmentDate   = document.getElementById('studentEnrollmentDate').value;
+  var msg              = document.getElementById('studentMessage');
 
   if (!studentId || !fullName || !gender || !className) {
     msg.style.color = '#f87171';
@@ -144,7 +150,19 @@ window.submitAddStudent = async function() {
   var btn = document.getElementById('addStudentBtn');
   btn.disabled = true;
 
-  var result = await apiRequest('addStudent', { studentID: studentId, fullName, gender, className, studentClass: className, academicYear });
+  var result = await apiRequest('addStudent', {
+    studentID: studentId,
+    fullName,
+    gender,
+    className,
+    studentClass: className,
+    academicYear,
+    dateOfBirth,
+    parentName,
+    parentPhone,
+    address,
+    enrollmentDate,
+  });
   btn.disabled = false;
   if (result && result.ok) {
     msg.style.color = '#4ade80';
@@ -154,6 +172,11 @@ window.submitAddStudent = async function() {
     document.getElementById('studentGender').value   = '';
     document.getElementById('studentClass').value    = '';
     document.getElementById('studentYear').value     = '';
+    document.getElementById('studentDateOfBirth').value = '';
+    document.getElementById('studentParentName').value = '';
+    document.getElementById('studentParentPhone').value = '';
+    document.getElementById('studentAddress').value = '';
+    document.getElementById('studentEnrollmentDate').value = '';
     showToast('Student added successfully.', 'ok');
     await loadStudents();
   } else {
@@ -164,6 +187,18 @@ window.submitAddStudent = async function() {
 };
 
 // ── Edit modal ────────────────────────────────────────────────────────────
+
+function normalizeDateValue(value) {
+  if (value === undefined || value === null) return '';
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  var raw = String(value || '').trim();
+  if (!raw) return '';
+  var isoMatch = raw.match(/^(\d{4}-\d{2}-\d{2})(?:[T ].*)?$/);
+  if (isoMatch) return isoMatch[1];
+  var d = new Date(raw);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return '';
+}
 
 window.openStudentEdit = function(studentID) {
   var student = _allStudents.find(function(s) {
@@ -177,6 +212,11 @@ window.openStudentEdit = function(studentID) {
   document.getElementById('editStudentGender').value         = student.Gender || '';
   document.getElementById('editStudentClass').value          = student.Class || student.Grade || '';
   document.getElementById('editStudentYear').value           = student.AcademicYear || '';
+  document.getElementById('editStudentDateOfBirth').value    = normalizeDateValue(student.DateOfBirth || student['Date Of Birth'] || student['Date of Birth'] || '');
+  document.getElementById('editStudentParentName').value     = student.ParentName || student.StudentParentName || '';
+  document.getElementById('editStudentParentPhone').value    = student.ParentPhone || '';
+  document.getElementById('editStudentAddress').value        = student.Address || '';
+  document.getElementById('editStudentEnrollmentDate').value = normalizeDateValue(student.EnrollmentDate || student['Enrollment Date'] || '');
   document.getElementById('editStudentMessage').textContent  = '';
   document.getElementById('editStudentModalSub').textContent = 'Editing: ' + name;
   document.getElementById('editStudentModal').classList.add('open');
@@ -187,15 +227,34 @@ window.closeStudentModal = function() {
 };
 
 window.saveStudentEdit = async function() {
-  var studentID    = document.getElementById('editStudentID').value.trim();
-  var fullName     = document.getElementById('editStudentFullName').value.trim();
-  var gender       = document.getElementById('editStudentGender').value;
-  var className    = document.getElementById('editStudentClass').value;
-  var academicYear = document.getElementById('editStudentYear').value.trim();
-  var msg          = document.getElementById('editStudentMessage');
+  var studentID         = document.getElementById('editStudentID').value.trim();
+  var fullName          = document.getElementById('editStudentFullName').value.trim();
+  var gender            = document.getElementById('editStudentGender').value;
+  var className         = document.getElementById('editStudentClass').value;
+  var academicYear      = document.getElementById('editStudentYear').value.trim();
+  var dateOfBirth       = document.getElementById('editStudentDateOfBirth').value;
+  var parentName        = document.getElementById('editStudentParentName').value.trim();
+  var parentPhone       = document.getElementById('editStudentParentPhone').value.trim();
+  var address           = document.getElementById('editStudentAddress').value.trim();
+  var enrollmentDate    = document.getElementById('editStudentEnrollmentDate').value;
+  var msg               = document.getElementById('editStudentMessage');
 
   msg.textContent = 'Saving changes…';
-  var result = await apiRequest('updateStudent', { studentID, fullName, gender, className, studentClass: className, academicYear });
+  var session = getSession() || {};
+  var result = await apiRequest('updateStudent', {
+    studentID,
+    fullName,
+    gender,
+    className,
+    studentClass: className,
+    academicYear,
+    dateOfBirth,
+    parentName,
+    parentPhone,
+    address,
+    enrollmentDate,
+    requesterRole: session.role || '',
+  });
   if (result && result.ok) {
     closeStudentModal();
     showToast('Student updated successfully.', 'ok');
@@ -207,6 +266,11 @@ window.saveStudentEdit = async function() {
 };
 
 // ── Delete confirm modal ──────────────────────────────────────────────────
+
+window.openStudentProfile = function(studentID) {
+  if (!studentID) return;
+  window.location.href = 'student_profile.html?studentID=' + encodeURIComponent(studentID);
+};
 
 window.openDeleteStudentModal = function(studentID, name) {
   _pendingDeleteID = studentID;

@@ -25,6 +25,8 @@ function doPost(e) {
         return addTeacher(data);
       case "addStudent":
         return addStudent(data);
+      case "getStudentProfile":
+        return getStudentProfile(data);
       case "listTeachers":
         return listTeachers();
       case "listStudents":
@@ -39,6 +41,8 @@ function doPost(e) {
         return deleteStudent(data);
       case "getTeacherData":
         return getTeacherData(data);
+      case "saveStudentGrades":
+        return saveStudentGrades(data);
       case "saveGrade":
         return saveGrade(data);
       case "getPrincipalProfile":
@@ -84,7 +88,7 @@ function loginUser(data) {
         );
       }
       return jsonResponse(true, "Login successful.", {
-        role: user.Role || "teacher",
+        role: String(user.Role || "teacher").trim(),
         status: userStatus,
       });
     }
@@ -100,6 +104,17 @@ function addStudent(data) {
     data.className || data.studentClass || data.classValue || "",
   ).trim();
   const academicYear = String(data.academicYear || "").trim();
+  const dateOfBirth = String(
+    data.dateOfBirth || data.studentDateOfBirth || "",
+  ).trim();
+  const parentName = String(
+    data.parentName || data.studentParentName || "",
+  ).trim();
+  const parentPhone = String(data.parentPhone || "").trim();
+  const address = String(data.address || "").trim();
+  const enrollmentDate = String(
+    data.enrollmentDate || data.studentEnrollmentDate || "",
+  ).trim();
 
   if (!studentID || !fullName) {
     return jsonResponse(false, "Student ID and full name are required.");
@@ -115,7 +130,18 @@ function addStudent(data) {
   });
   if (existing) return jsonResponse(false, "Student ID already exists.");
 
-  sheet.appendRow([studentID, fullName, gender, classValue, academicYear]);
+  sheet.appendRow([
+    studentID,
+    fullName,
+    gender,
+    classValue,
+    academicYear,
+    dateOfBirth,
+    parentName,
+    parentPhone,
+    address,
+    enrollmentDate,
+  ]);
   return jsonResponse(true, "Student added successfully.", {
     student: { studentID, fullName },
   });
@@ -241,11 +267,28 @@ function deleteTeacher(data) {
 }
 
 function updateStudent(data) {
+  const requesterRole = String(data.requesterRole || "")
+    .trim()
+    .toLowerCase();
+  if (requesterRole !== "principal")
+    return jsonResponse(false, "Only principals may update student profiles.");
+
   const studentID = String(data.studentID || data.studentId || "").trim();
   const fullName = String(data.fullName || "").trim();
   const gender = String(data.gender || "").trim();
   const classValue = String(data.className || data.studentClass || "").trim();
   const academicYear = String(data.academicYear || "").trim();
+  const dateOfBirth = String(
+    data.dateOfBirth || data.studentDateOfBirth || "",
+  ).trim();
+  const parentName = String(
+    data.parentName || data.studentParentName || "",
+  ).trim();
+  const parentPhone = String(data.parentPhone || "").trim();
+  const address = String(data.address || "").trim();
+  const enrollmentDate = String(
+    data.enrollmentDate || data.studentEnrollmentDate || "",
+  ).trim();
   if (!studentID) return jsonResponse(false, "Student ID is required.");
 
   // --- Update STUDENTS sheet ---
@@ -261,6 +304,11 @@ function updateStudent(data) {
   if (gender) row[2] = gender;
   if (classValue) row[3] = classValue;
   if (academicYear) row[4] = academicYear;
+  if (dateOfBirth) row[5] = dateOfBirth;
+  if (parentName) row[6] = parentName;
+  if (parentPhone) row[7] = parentPhone;
+  if (address) row[8] = address;
+  if (enrollmentDate) row[9] = enrollmentDate;
   sheet.getRange(index + 2, 1, 1, row.length).setValues([row]);
 
   // --- Sync StudentName and Class changes to GRADES sheet ---
@@ -391,11 +439,90 @@ function readSheetRows(sheetName) {
     });
 }
 
-function getGrades() {
+function getGrades(data) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("GRADES");
   if (!sheet) return jsonResponse(false, "GRADES sheet not found.");
+  const rows = sheet.getDataRange().getValues();
+  const teacherUsername = String(
+    data && data.teacherUsername ? data.teacherUsername : "",
+  ).trim();
+  if (!teacherUsername) {
+    return jsonResponse(true, "Grades loaded.", {
+      grades: rows,
+    });
+  }
+
+  const users = readSheetRows("USERS");
+  const teacher = users.find(function (row) {
+    return (
+      String(row.Username || "")
+        .trim()
+        .toLowerCase() === teacherUsername.toLowerCase()
+    );
+  });
+  if (!teacher) return jsonResponse(false, "Teacher not found.");
+
+  const assignedClasses = String(teacher.AssignedClasses || "ALL").trim();
+  const assignedSubjects = String(teacher.AssignedSubjects || "ALL").trim();
+  const isAllClasses = assignedClasses.toUpperCase() === "ALL";
+  const isAllSubjects = assignedSubjects.toUpperCase() === "ALL";
+  const classList = assignedClasses
+    .toLowerCase()
+    .split(",")
+    .map(function (c) {
+      return c.trim();
+    });
+  const subjectList = assignedSubjects
+    .toLowerCase()
+    .split(",")
+    .map(function (s) {
+      return s.trim();
+    });
+
+  const headers = rows[0] || [];
+  const classCol = headers.findIndex(function (h) {
+    return (
+      String(h || "")
+        .trim()
+        .toLowerCase() === "class"
+    );
+  });
+  const subjectCol = headers.findIndex(function (h) {
+    return (
+      String(h || "")
+        .trim()
+        .toLowerCase() === "subject"
+    );
+  });
+
+  const filteredRows = rows.filter(function (row, index) {
+    if (index === 0) return true;
+    const rowClass =
+      classCol >= 0
+        ? String(row[classCol] || "")
+            .trim()
+            .toLowerCase()
+        : "";
+    const rowSubject =
+      subjectCol >= 0
+        ? String(row[subjectCol] || "")
+            .trim()
+            .toLowerCase()
+        : "";
+    const classAllowed =
+      isAllClasses ||
+      classList.some(function (c) {
+        return rowClass === c;
+      });
+    if (!classAllowed) return false;
+    if (isAllSubjects) return true;
+    return subjectList.some(function (s) {
+      return rowSubject === s;
+    });
+  });
+
   return jsonResponse(true, "Grades loaded.", {
-    grades: sheet.getDataRange().getValues(),
+    grades: filteredRows,
   });
 }
 
@@ -551,6 +678,146 @@ function getTeacherData(data) {
         .filter(Boolean);
     })(),
   });
+}
+
+function getStudentProfile(data) {
+  const studentID = String(data.studentID || data.studentId || "").trim();
+  if (!studentID) return jsonResponse(false, "Student ID is required.");
+
+  const students = readSheetRows("STUDENTS");
+  const student = students.find(function (s) {
+    return (
+      String(s.StudentID || "")
+        .trim()
+        .toLowerCase() === studentID.toLowerCase()
+    );
+  });
+  if (!student) return jsonResponse(false, "Student not found.");
+
+  const teacherUsername = String(data.teacherUsername || "").trim();
+  if (teacherUsername) {
+    const users = readSheetRows("USERS");
+    const teacher = users.find(function (u) {
+      return (
+        String(u.Username || "")
+          .trim()
+          .toLowerCase() === teacherUsername.toLowerCase()
+      );
+    });
+    if (!teacher) return jsonResponse(false, "Teacher not found.");
+
+    const assignedClasses = String(teacher.AssignedClasses || "ALL").trim();
+    if (assignedClasses.toUpperCase() !== "ALL") {
+      const allowedClasses = assignedClasses
+        .split(/\s*,\s*/)
+        .map(function (c) {
+          return String(c).trim().toLowerCase();
+        })
+        .filter(Boolean);
+      const studentClass = String(student.Class || student.Grade || "")
+        .trim()
+        .toLowerCase();
+      if (!studentClass || allowedClasses.indexOf(studentClass) === -1) {
+        return jsonResponse(
+          false,
+          "You are not assigned to this student's class.",
+        );
+      }
+    }
+  }
+
+  return jsonResponse(true, "Student profile loaded.", { student: student });
+}
+
+function saveStudentGrades(data) {
+  const requesterRole = String(data.requesterRole || "")
+    .trim()
+    .toLowerCase();
+  if (requesterRole !== "principal")
+    return jsonResponse(false, "Only principals may save student grades.");
+
+  const studentID = String(data.studentID || "").trim();
+  const className = String(data.className || "").trim();
+  const grades = data.grades || [];
+  const overwrite = data.overwrite === true;
+
+  if (!studentID) return jsonResponse(false, "Student ID is required.");
+  if (!Array.isArray(grades) || grades.length === 0)
+    return jsonResponse(false, "No grades to save.");
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("GRADES");
+  if (!sheet) return jsonResponse(false, "GRADES sheet not found.");
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 1) return jsonResponse(false, "GRADES sheet is empty.");
+  const lastCol = sheet.getLastColumn();
+  const rows = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  const headers = rows[0].map(function (h) {
+    return String(h).trim();
+  });
+  const normHeaders = headers.map(function (h) {
+    return h.toLowerCase().replace(/\s+/g, "");
+  });
+
+  function colIndex(name) {
+    return normHeaders.indexOf(name.toLowerCase().replace(/\s+/g, ""));
+  }
+
+  const sidCol = colIndex("studentid");
+  const subjCol = colIndex("subject");
+  const classCol = colIndex("class");
+  if (sidCol < 0 || subjCol < 0)
+    return jsonResponse(false, "GRADES sheet is missing required columns.");
+
+  var updatedCount = 0;
+  grades.forEach(function (item) {
+    const subject = String(item.subject || "").trim();
+    if (!subject) return;
+    var rowIndex = -1;
+    for (var i = 1; i < rows.length; i++) {
+      var rowSID = String(rows[i][sidCol] || "")
+        .trim()
+        .toLowerCase();
+      var rowSubject = String(rows[i][subjCol] || "")
+        .trim()
+        .toLowerCase();
+      if (
+        rowSID === studentID.toLowerCase() &&
+        rowSubject === subject.toLowerCase()
+      ) {
+        rowIndex = i;
+        break;
+      }
+    }
+
+    if (rowIndex === -1) {
+      // append new row
+      var newRow = new Array(headers.length).fill("");
+      if (sidCol >= 0) newRow[sidCol] = studentID;
+      if (subjCol >= 0) newRow[subjCol] = subject;
+      if (classCol >= 0) newRow[classCol] = className;
+      Object.keys(item.values || {}).forEach(function (colName) {
+        var ci = colIndex(colName);
+        if (ci >= 0) newRow[ci] = item.values[colName];
+      });
+      sheet.getRange(lastRow + 1, 1, 1, newRow.length).setValues([newRow]);
+      lastRow++;
+      rows.push(newRow);
+      updatedCount++;
+    } else {
+      var row = rows[rowIndex];
+      Object.keys(item.values || {}).forEach(function (colName) {
+        var ci = colIndex(colName);
+        if (ci < 0) return;
+        var value = item.values[colName];
+        if (overwrite || String(row[ci] || "").trim() === "") {
+          sheet.getRange(rowIndex + 1, ci + 1).setValue(value);
+          updatedCount++;
+        }
+      });
+    }
+  });
+
+  return jsonResponse(true, "Student grades saved.", { updated: updatedCount });
 }
 
 function generateReport(data) {

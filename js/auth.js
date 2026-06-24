@@ -53,10 +53,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function guardRoute(expectedRole) {
   var session = getSession();
-  if (!session || session.role !== expectedRole) {
+  if (!session) {
     window.location.href = 'login.html';
     return;
   }
+
+  var role = String(session.role || '').trim().toLowerCase();
+  var allowed = expectedRole;
+  if (!Array.isArray(allowed)) allowed = [allowed];
+  allowed = allowed.map(function(r) { return String(r || '').toLowerCase(); });
+
+  if (allowed.indexOf(role) === -1) {
+    window.location.href = 'login.html';
+    return;
+  }
+
   var status = String(session.status || 'active').toLowerCase();
   if (status === 'blocked' || status === 'inactive') {
     clearSession();

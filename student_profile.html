@@ -1,0 +1,1899 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Profile — AJB Leaders Academy</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    .top-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(37, 99, 235, 0.15);
+      color: #93c5fd;
+      transition: background 0.18s, border-color 0.18s;
+      text-decoration: none;
+    }
+
+    .nav-btn:hover {
+      background: rgba(37, 99, 235, 0.3);
+      border-color: rgba(37, 99, 235, 0.5);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .page-subtitle {
+      margin: 4px 0 0;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media(max-width:960px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .dash-panel {
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .dash-panel h2 {
+      margin: 0 0 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profile-card {
+      display: grid;
+      gap: 14px;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .profile-field {
+      flex: 1 1 180px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #e2e8f0;
+      min-height: 44px;
+    }
+
+    .profile-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-secondary,
+    .btn-primary,
+    .btn-link {
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      padding: 10px 18px;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.07);
+      color: #cbd5e1;
+      padding: 10px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-link {
+      background: none;
+      color: #93c5fd;
+      padding: 0;
+    }
+
+    .profile-intro {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      background: rgba(37, 99, 235, 0.25);
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .grades-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .grades-table th,
+    .grades-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .grades-table th {
+      text-align: left;
+      color: #94a3b8;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .grades-table td {
+      color: #f8fafc;
+    }
+
+    .grades-table td.subject {
+      color: #fbbf24;
+      font-weight: 700;
+    }
+
+    /* Grade input cell */
+    .grades-table td.gcell {
+      text-align: center;
+      padding: 5px 4px;
+    }
+
+    .grade-input {
+      width: 58px;
+      text-align: center;
+      background: rgba(11, 18, 32, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 7px;
+      color: #f8fafc;
+      padding: 5px 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .grade-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    .grade-input.locked {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.06);
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    .grade-input.g-red {
+      color: #f87171 !important;
+    }
+
+    .grade-input.g-blue {
+      color: #60a5fa !important;
+    }
+
+    .grade-input.g-green {
+      color: #4ade80 !important;
+    }
+
+    .grade-input.g-white {
+      color: #f8fafc !important;
+    }
+
+    .rc-wrapper {
+      position: relative;
+      background: rgba(17, 24, 39, 0.95);
+      border: 4px solid #000;
+      border-radius: 0;
+      padding: 28px;
+      font-family: 'Georgia', serif;
+      margin-top: 24px;
+    }
+
+    .rc-watermark {
+      position: absolute;
+      inset: 0;
+      background-image: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/...');
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 55%;
+      opacity: 0.10;
+      border-radius: 14px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .rc-wrapper>*:not(.rc-watermark) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .rc-school-hdr {
+      position: relative;
+      text-align: center;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(37, 99, 235, 0.4);
+    }
+
+    .rc-school-hdr .sch-name {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #D4AF37;
+      margin: 0;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .rc-school-hdr .sch-sub {
+      margin: 2px 0 0 0;
+      padding: 0;
+    }
+
+    .rc-school-hdr .sch-card-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      margin: 8px 0 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .rc-info-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      align-items: flex-end;
+    }
+
+    .rc-info-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .rc-info-field label {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #64748b;
+      font-family: Arial, sans-serif;
+      display: block;
+    }
+
+    .rc-info-field .rc-info-val {
+      font-size: 0.97rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding-bottom: 3px;
+      min-width: 80px;
+    }
+
+    .rc-table-scroll {
+      overflow-x: auto;
+    }
+
+    .rc-grade-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      font-family: Arial, sans-serif;
+      min-width: 640px;
+    }
+
+    .rc-grade-table .sem-hdr td {
+      background: rgba(37, 99, 235, 0.18);
+      color: #93c5fd;
+      font-weight: 800;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 5px 7px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+    }
+
+    .rc-grade-table .sem-hdr td.subj-hdr {
+      background: rgba(15, 23, 42, 0.6);
+      color: #94a3b8;
+      text-align: left;
+    }
+
+    .rc-grade-table .col-hdr th {
+      background: rgba(11, 18, 32, 0.7);
+      color: #94a3b8;
+      font-size: 0.62rem;
+      letter-spacing: 0.06em;
+      text-align: center;
+      padding: 5px 4px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      white-space: nowrap;
+    }
+
+    .rc-grade-table .col-hdr th.subj-hdr {
+      text-align: left;
+      padding-left: 8px;
+    }
+
+    .rc-grade-table .col-hdr th.exam-th {
+      color: #f472b6;
+    }
+
+    .rc-grade-table .col-hdr th.avg-th {
+      color: #34d399;
+    }
+
+    .rc-grade-table .col-hdr th.yearly-th {
+      color: #fbbf24;
+    }
+
+    .rc-grade-table tbody tr td {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 5px 4px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .rc-grade-table tbody tr td.subj-col {
+      text-align: left;
+      padding-left: 8px;
+      color: #fbbf24;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .rc-grade-table tbody tr:hover td {
+      background: rgba(37, 99, 235, 0.05);
+    }
+
+    .rc-grade-table tbody tr.avg-row td {
+      background: rgba(37, 99, 235, 0.08);
+      font-weight: 800;
+    }
+
+    .rc-grade-table tbody tr.avg-row td.subj-col {
+      color: #60a5fa;
+    }
+
+    .rc-grade-table tbody tr.rank-row td {
+      background: rgba(251, 191, 36, 0.06);
+    }
+
+    .rc-grade-table tbody tr.rank-row td.subj-col {
+      color: #fbbf24;
+    }
+
+    .rc-grade-table tbody tr.conduct-row td {
+      background: rgba(52, 211, 153, 0.06);
+    }
+
+    .rc-grade-table tbody tr.conduct-row td.subj-col {
+      color: #6ee7b7;
+    }
+
+    .g-green {
+      color: #4ade80;
+      font-weight: 700;
+    }
+
+    .g-blue {
+      color: #60a5fa;
+      font-weight: 700;
+    }
+
+    .g-red {
+      color: #f87171;
+      font-weight: 700;
+    }
+
+    .g-none {
+      color: #334155;
+    }
+
+    .rc-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .rc-grading-key {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-family: Arial, sans-serif;
+    }
+
+    .rc-grading-key strong {
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .rc-promotion {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-family: Arial, sans-serif;
+      max-width: 280px;
+    }
+
+    .rc-promotion strong {
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .rc-promotion p {
+      margin: 0 0 6px;
+      line-height: 1.6;
+    }
+
+    .rc-promotion .fill-line {
+      display: inline-block;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      min-width: 90px;
+      padding: 0 3px;
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .rc-promotion .fill-line.short {
+      min-width: 50px;
+    }
+
+    .promo-option {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      line-height: 1.6;
+    }
+
+    .promo-option .chk {
+      font-size: 0.85rem;
+    }
+
+    .rc-motto {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-align: left;
+      font-family: Arial, sans-serif;
+      font-style: italic;
+    }
+
+    .rc-motto strong {
+      display: block;
+      color: #fbbf24;
+      font-style: normal;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .rc-sig-row {
+      display: flex;
+      gap: 32px;
+      margin-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      padding-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-print {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.83rem;
+      font-weight: 700;
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      color: #d8b4fe;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+
+    .btn-print:hover {
+      background: rgba(168, 85, 247, 0.28);
+      border-color: #a855f7;
+    }
+
+    .btn-print:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+
+      #studentReportCard,
+      #studentReportCard * {
+        visibility: visible !important;
+      }
+
+      #studentReportCard {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+      }
+
+      .rc-wrapper {
+        background: #fff !important;
+        border-color: #FFC200 !important;
+        box-shadow: none !important;
+      }
+
+      .rc-school-hdr .sch-name {
+        color: #D4AF37 !important;
+      }
+
+      .rc-school-hdr .sch-sub,
+      .rc-school-hdr .sch-card-label,
+      .rc-info-field label,
+      .rc-info-field .rc-info-val,
+      .rc-grading-key,
+      .rc-promotion,
+      .rc-motto,
+      .sig-label {
+        color: #000 !important;
+      }
+
+      .rc-grade-table .sem-hdr td {
+        background: #dbeafe !important;
+        color: #1e3a8a !important;
+        border: 1px solid #93c5fd !important;
+      }
+
+      .rc-grade-table .sem-hdr td.subj-hdr {
+        background: #f8fafc !important;
+        color: #555 !important;
+      }
+
+      .rc-grade-table .col-hdr th {
+        background: #f1f5f9 !important;
+        color: #555 !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+
+      .rc-grade-table .col-hdr th.exam-th {
+        color: #9d174d !important;
+      }
+
+      .rc-grade-table .col-hdr th.avg-th {
+        color: #065f46 !important;
+      }
+
+      .rc-grade-table .col-hdr th.yearly-th {
+        color: #92400e !important;
+      }
+
+      .rc-grade-table tbody tr td {
+        border: 1px solid #e2e8f0 !important;
+      }
+
+      .rc-grade-table tbody tr td.subj-col {
+        color: #92400e !important;
+      }
+
+      .rc-grade-table tbody tr.avg-row td {
+        background: #eff6ff !important;
+      }
+
+      .rc-grade-table tbody tr.avg-row td.subj-col {
+        color: #1e40af !important;
+      }
+
+      .rc-grade-table tbody tr.rank-row td {
+        background: #fefce8 !important;
+      }
+
+      .rc-grade-table tbody tr.rank-row td.subj-col {
+        color: #92400e !important;
+      }
+
+      .rc-grade-table tbody tr.conduct-row td {
+        background: #f0fdf4 !important;
+      }
+
+      .rc-grade-table tbody tr.conduct-row td.subj-col {
+        color: #166534 !important;
+      }
+
+      .g-green {
+        color: #166534 !important;
+      }
+
+      .g-blue {
+        color: #1e40af !important;
+      }
+
+      .g-red {
+        color: #991b1b !important;
+      }
+
+      .g-none {
+        color: #94a3b8 !important;
+      }
+
+      .page-shell {
+        padding: 0 !important;
+      }
+    }
+
+    .sig-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .sig-line {
+      width: 180px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      height: 26px;
+    }
+
+    .sig-label {
+      font-size: 0.62rem;
+      color: #475569;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-family: Arial, sans-serif;
+    }
+
+    @media print {
+      * {
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+      }
+
+      html,
+      body {
+        background: #fff !important;
+        color: #222 !important;
+      }
+
+      .g-green {
+        color: #166534 !important;
+        font-weight: 700 !important;
+      }
+
+      .g-blue {
+        color: #1d4ed8 !important;
+        font-weight: 700 !important;
+      }
+
+      .g-red {
+        color: #b91c1c !important;
+        font-weight: 700 !important;
+      }
+
+      .g-none {
+        color: #94a3b8 !important;
+      }
+
+      ::-webkit-scrollbar {
+        display: none;
+      }
+
+      .page-header,
+      .profile-footer,
+      .profile-edit-overlay,
+      .btn-print,
+      .btn-refresh,
+      .top-nav,
+      #stateMsg {
+        display: none !important;
+      }
+
+      .page-shell {
+        max-width: 100%;
+        padding: 0;
+      }
+
+      .panel {
+        background: #fff !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0;
+      }
+
+      #studentReportCard {
+        position: relative !important;
+      }
+
+      .rc-wrapper {
+        break-before: page;
+        break-inside: avoid;
+        background: #fff !important;
+        border: 4px solid #FFC200 !important;
+        border-radius: 0 !important;
+        padding: 16px 20px 14px !important;
+        box-shadow: none !important;
+        position: relative !important;
+      }
+
+      .rc-watermark {
+        opacity: 0.10 !important;
+      }
+
+      .rc-logo-left,
+      .rc-logo-right {
+        width: 56px !important;
+        height: 56px !important;
+        filter: none !important;
+      }
+
+      .rc-school-hdr {
+        border-bottom: 2px solid #1a3a6b !important;
+      }
+
+      .rc-school-hdr .sch-name {
+        color: #D4AF37 !important;
+      }
+
+      .rc-school-hdr .sch-sub {
+        color: #555 !important;
+      }
+
+      .rc-school-hdr .sch-card-label {
+        color: #92400e !important;
+      }
+
+      .rc-info-field label {
+        color: #555 !important;
+      }
+
+      .rc-info-field .rc-info-val {
+        color: #000 !important;
+        border-bottom: 1px solid #333 !important;
+      }
+
+      .rc-grade-table .sem-hdr td {
+        background: #dbeafe !important;
+        color: #1e3a8a !important;
+        border: 1px solid #93c5fd !important;
+      }
+
+      .rc-grade-table .sem-hdr td.subj-hdr {
+        background: #f8fafc !important;
+        color: #555 !important;
+      }
+
+      .rc-grade-table .col-hdr th {
+        background: #f1f5f9 !important;
+        color: #555 !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+
+      .rc-grade-table .col-hdr th.exam-th {
+        color: #9d174d !important;
+      }
+
+      .rc-grade-table .col-hdr th.avg-th {
+        color: #065f46 !important;
+      }
+
+      .rc-grade-table .col-hdr th.yearly-th {
+        color: #92400e !important;
+      }
+
+      .rc-grade-table tbody tr td {
+        border: 1px solid #e2e8f0 !important;
+      }
+
+      .rc-grade-table tbody tr td.subj-col {
+        color: #92400e !important;
+      }
+
+      .rc-grade-table tbody tr.avg-row td {
+        background: #eff6ff !important;
+      }
+
+      .rc-grade-table tbody tr.avg-row td.subj-col {
+        color: #1e40af !important;
+      }
+
+      .rc-grade-table tbody tr.rank-row td {
+        background: #fefce8 !important;
+      }
+
+      .rc-grade-table tbody tr.rank-row td.subj-col {
+        color: #92400e !important;
+      }
+
+      .rc-grade-table tbody tr.conduct-row td {
+        background: #f0fdf4 !important;
+      }
+
+      .rc-grade-table tbody tr.conduct-row td.subj-col {
+        color: #166534 !important;
+      }
+
+      .rc-grade-table .g-green {
+        color: #166534 !important;
+        font-weight: 700 !important;
+      }
+
+      .rc-grade-table .g-blue {
+        color: #1d4ed8 !important;
+        font-weight: 700 !important;
+      }
+
+      .rc-grade-table .g-red {
+        color: #b91c1c !important;
+        font-weight: 700 !important;
+      }
+
+      .rc-grade-table .g-none {
+        color: #94a3b8 !important;
+      }
+
+      .rc-grading-key {
+        color: #444 !important;
+      }
+
+      .rc-grading-key strong {
+        color: #333 !important;
+      }
+
+      .rc-promotion {
+        color: #444 !important;
+      }
+
+      .rc-promotion strong {
+        color: #333 !important;
+      }
+
+      .rc-promotion .fill-line {
+        border-bottom: 1px solid #333 !important;
+        color: #000 !important;
+      }
+
+      .rc-motto {
+        color: #444 !important;
+      }
+
+      .rc-motto strong {
+        color: #92400e !important;
+      }
+
+      .sig-line {
+        border-bottom: 1px solid #333 !important;
+      }
+
+      .sig-label {
+        color: #555 !important;
+      }
+
+      .rc-sig-row {
+        border-top: 1px solid #ddd !important;
+      }
+    }
+
+    .state-msg {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+    }
+
+    .state-msg.info {
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      color: #93c5fd;
+    }
+
+    .state-msg.warn {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+
+    .profile-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .profile-edit-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      margin: 0 !important;
+      max-width: 560px;
+      width: calc(100% - 40px);
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .profile-edit-overlay::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: -1;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #cbd5e1;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      background: rgba(148, 163, 184, 0.12);
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page-shell">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">👤 Student Profile</h1>
+        <p class="page-subtitle">View student details and grades with role-aware access.</p>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="dash-panel">
+        <h2>Profile Details</h2>
+        <div class="profile-card">
+          <div class="profile-intro">
+            <div class="profile-avatar" id="studentAvatar">?</div>
+            <div>
+              <h3 id="studentName" style="margin:0;font-size:1.15rem;"></h3>
+              <p id="studentIdLabel" style="margin:6px 0 0;color:#94a3b8;"></p>
+            </div>
+          </div>
+          <div class="profile-row">
+            <div class="profile-field"><span class="field-label">Gender</span>
+              <div class="field-value" id="studentGender"></div>
+            </div>
+            <div class="profile-field"><span class="field-label">Class</span>
+              <div class="field-value" id="studentClass"></div>
+            </div>
+          </div>
+          <div class="profile-row">
+            <div class="profile-field"><span class="field-label">Academic Year</span>
+              <div class="field-value" id="studentYear"></div>
+            </div>
+            <div class="profile-field"><span class="field-label">Date of Birth</span>
+              <div class="field-value" id="studentDateOfBirth"></div>
+            </div>
+          </div>
+          <div class="profile-row">
+            <div class="profile-field"><span class="field-label">Parent / Guardian</span>
+              <div class="field-value" id="studentParentName"></div>
+            </div>
+            <div class="profile-field"><span class="field-label">Parent Phone</span>
+              <div class="field-value" id="studentParentPhone"></div>
+            </div>
+          </div>
+          <div class="profile-row">
+            <div class="profile-field" style="flex:1 1 100%;"><span class="field-label">Address</span>
+              <div class="field-value" id="studentAddress"></div>
+            </div>
+          </div>
+          <div class="profile-row">
+            <div class="profile-field"><span class="field-label">Enrollment Date</span>
+              <div class="field-value" id="studentEnrollmentDate"></div>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button class="btn-secondary" id="backToHomeBtn" onclick="goBackHome()">← Back</button>
+            <button class="btn-primary" onclick="printReport()" id="printReportBtn" style="display:none;">🖨️ Print
+              Report</button>
+            <button class="btn-primary" id="editProfileBtn" onclick="openEditProfile()">✏️ Edit Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-panel">
+        <h2 style="display:flex;align-items:center;justify-content:space-between;">
+          Grades
+          <button class="btn-secondary" id="editGradesBtn" onclick="toggleGradesEditMode()"
+            style="display:none;font-size:0.85rem;padding:6px 14px;">✏️ Edit All</button>
+        </h2>
+        <div id="gradesState" class="state-msg info"><span>⏳</span><span>Loading grades…</span></div>
+        <div class="table-scroll" id="gradesTableWrap" style="display:none; margin-top:14px;">
+          <table class="grades-table" id="gradesTable">
+            <thead id="gradesTableHead">
+              <tr>
+                <th>Subject</th>
+              </tr>
+            </thead>
+            <tbody id="gradesBody"></tbody>
+          </table>
+        </div>
+        <div class="profile-footer" style="align-items:center;">
+          <span id="saveGradesStatus" class="state-msg info" style="display:none;margin-right:auto;"></span>
+          <button class="btn-primary" id="saveGradesBtn" onclick="saveProfileGrades()" style="display:none;">💾 Save
+            Grades</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="studentReportCard"></div>
+
+    <div class="dash-panel profile-edit-overlay" style="display:none;" id="profileEditPanel">
+      <h2>Edit Student Profile</h2>
+      <div class="profile-card">
+        <div class="profile-row">
+          <div class="profile-field"><span class="field-label">Full Name</span><input class="field-value"
+              id="editFullName" type="text"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+          <div class="profile-field"><span class="field-label">Gender</span><input class="field-value" id="editGender"
+              type="text" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-field"><span class="field-label">Class</span><input class="field-value" id="editClass"
+              type="text" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+          <div class="profile-field"><span class="field-label">Academic Year</span><input class="field-value"
+              id="editYear" type="text"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-field"><span class="field-label">Date of Birth</span><input class="field-value"
+              id="editDateOfBirth" type="date"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+          <div class="profile-field"><span class="field-label">Enrollment Date</span><input class="field-value"
+              id="editEnrollmentDate" type="date"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-field"><span class="field-label">Parent / Guardian</span><input class="field-value"
+              id="editParentName" type="text"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+          <div class="profile-field"><span class="field-label">Parent Phone</span><input class="field-value"
+              id="editParentPhone" type="tel"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-field" style="flex:1 1 100%;"><span class="field-label">Address</span><input
+              class="field-value" id="editAddress" type="text"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
+        </div>
+        <div class="profile-footer">
+          <button class="btn-primary" onclick="saveProfileInfo()">💾 Save Profile</button>
+          <button class="btn-secondary" onclick="cancelProfileEdit()">Cancel</button>
+        </div>
+        <div id="editProfileMsg" class="state-msg info" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="pageAlert" class="state-msg warn" style="display:none; margin-top:20px;"></div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    guardRoute(['principal', 'teacher']);
+
+    var _studentID = '';
+    var _student = null;
+    var _grades = [];
+    var _gradeHeaders = [];
+    var _subjectsByClass = {};
+    var _profileEditable = true;
+    var SKIP_COLS = ['studentid', 'student id', 'studentname', 'student name', 'class', 'subject', 'teacher', 'academicyear', 'academic year'];
+
+    var PERIOD_RE = /^period\s*(\d+)$/i;
+    var EXAM_RE = /^exam\s*(\d+)$/i;
+    var SEM_AVG_RE = /^sem(ester)?\s*\d*\s*(avg|average)$/i;
+    var YEARLY_RE = /^(yearly|annual)\s*(avg|average)?$/i;
+
+    function qs(key) {
+      var params = new URLSearchParams(window.location.search);
+      return params.get(key) || '';
+    }
+
+    function dateToInputValue(value) {
+      if (value === undefined || value === null) return '';
+      if (value instanceof Date) return value.toISOString().slice(0, 10);
+      var raw = String(value || '').trim();
+      if (!raw) return '';
+      var isoMatch = raw.match(/^(\d{4}-\d{2}-\d{2})(?:[T ].*)?$/);
+      if (isoMatch) return isoMatch[1];
+      var d = new Date(raw);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      return '';
+    }
+
+    function formatDateDisplay(value) {
+      var val = dateToInputValue(value);
+      return val || '—';
+    }
+
+    function configureProfileAccess() {
+      var session = getSession() || {};
+      var role = String(session.role || '').trim().toLowerCase();
+      _profileEditable = role === 'principal';
+
+      var editBtn = document.getElementById('editProfileBtn');
+      var gradesBtn = document.getElementById('editGradesBtn');
+      var saveGradesBtn = document.getElementById('saveGradesBtn');
+      var printBtn = document.getElementById('printReportBtn');
+      var reportCard = document.getElementById('studentReportCard');
+      var profileEditPanel = document.getElementById('profileEditPanel');
+      var navDashboard = document.getElementById('navDashboard');
+      var navTeacher = document.getElementById('navTeacher');
+      var navStudents = document.getElementById('navStudents');
+      var navReportCards = document.getElementById('navReportCards');
+      var navGradeRecords = document.getElementById('navGradeRecords');
+
+      if (!_profileEditable) {
+        if (editBtn) editBtn.style.display = 'none';
+        if (gradesBtn) gradesBtn.style.display = 'none';
+        if (saveGradesBtn) saveGradesBtn.style.display = 'none';
+        if (printBtn) printBtn.style.display = 'none';
+        if (profileEditPanel) profileEditPanel.style.display = 'none';
+        if (navDashboard) navDashboard.style.display = 'none';
+        if (navTeacher) navTeacher.style.display = '';
+        if (navStudents) navStudents.style.display = 'none';
+        if (navReportCards) navReportCards.style.display = 'none';
+        if (navGradeRecords) navGradeRecords.style.display = 'none';
+      } else {
+        if (editBtn) editBtn.style.display = '';
+        if (gradesBtn) gradesBtn.style.display = '';
+        if (saveGradesBtn) saveGradesBtn.style.display = '';
+        if (printBtn) printBtn.style.display = '';
+        if (profileEditPanel) profileEditPanel.style.display = 'none';
+        if (navDashboard) navDashboard.style.display = '';
+        if (navTeacher) navTeacher.style.display = '';
+        if (navStudents) navStudents.style.display = '';
+        if (navReportCards) navReportCards.style.display = '';
+        if (navGradeRecords) navGradeRecords.style.display = '';
+      }
+    }
+
+    function setAlert(text, type) {
+      var el = document.getElementById('pageAlert');
+      el.textContent = text;
+      el.className = 'state-msg ' + (type === 'warn' ? 'warn' : 'info');
+      el.style.display = text ? 'flex' : 'none';
+    }
+
+    function goBackHome() {
+      var session = getSession() || {};
+      var role = String(session.role || '').trim().toLowerCase();
+      if (role === 'teacher') {
+        window.location.href = 'teacher.html';
+      } else {
+        window.location.href = 'manage-students.html';
+      }
+    }
+
+    function renderProfile(student) {
+      document.getElementById('studentAvatar').textContent = student.FullName ? student.FullName.charAt(0).toUpperCase() : '?';
+      document.getElementById('studentName').textContent = student.FullName || student.StudentName || 'Student';
+      document.getElementById('studentIdLabel').textContent = 'ID: ' + (student.StudentID || '—');
+      document.getElementById('studentGender').textContent = student.Gender || '—';
+      document.getElementById('studentClass').textContent = student.Class || student.Grade || '—';
+      document.getElementById('studentYear').textContent = student.AcademicYear || '—';
+      document.getElementById('studentDateOfBirth').textContent = formatDateDisplay(student.DateOfBirth || student['Date Of Birth'] || student['Date of Birth'] || '');
+      document.getElementById('studentParentName').textContent = student.ParentName || '—';
+      document.getElementById('studentParentPhone').textContent = student.ParentPhone || '—';
+      document.getElementById('studentAddress').textContent = student.Address || '—';
+      document.getElementById('studentEnrollmentDate').textContent = formatDateDisplay(student.EnrollmentDate || student['Enrollment Date'] || '');
+
+      document.getElementById('editFullName').value = student.FullName || student.StudentName || '';
+      document.getElementById('editGender').value = student.Gender || '';
+      document.getElementById('editClass').value = student.Class || student.Grade || '';
+      document.getElementById('editYear').value = student.AcademicYear || '';
+      document.getElementById('editDateOfBirth').value = dateToInputValue(student.DateOfBirth || student['Date Of Birth'] || student['Date of Birth'] || '');
+      document.getElementById('editParentName').value = student.ParentName || '';
+      document.getElementById('editParentPhone').value = student.ParentPhone || '';
+      document.getElementById('editAddress').value = student.Address || '';
+      document.getElementById('editEnrollmentDate').value = dateToInputValue(student.EnrollmentDate || student['Enrollment Date'] || '');
+    }
+
+    var PERIOD_RE = /^period\s*(\d+)$/i;
+    var EXAM_RE = /^exam(\d+)$/i;
+    var SKIP_COLS = ['studentid', 'student id', 'studentname', 'student name',
+      'class', 'subject', 'date', 'teacher', 'average', 'semester',
+      'sem1 avg', 'sem1avg', 'sem2 avg', 'sem2avg', 'yearly avg', 'yearlyavg'];
+    var _inputCols = [];
+    var _gradeHeaders = [];
+
+    function discoverInputCols(gradeHeaders) {
+      var orderedKeys = gradeHeaders && gradeHeaders.length ? gradeHeaders : [];
+      if (!orderedKeys.length) return;
+      _inputCols = [];
+      orderedKeys.forEach(function (k) {
+        var lower = k.toLowerCase().trim();
+        if (SKIP_COLS.indexOf(lower) !== -1) return;
+        _inputCols.push(k);
+      });
+    }
+
+    function gClass(v) {
+      var n = parseFloat(v);
+      if (isNaN(n) || v === '') return '';
+      if (n >= 90 && n <= 100) return 'g-green';
+      if (n >= 70 && n <= 89) return 'g-blue';
+      if (n >= 60 && n <= 69) return 'g-red';
+      return 'g-white';
+    }
+
+    function renderGrades(grades) {
+      var body = document.getElementById('gradesBody');
+      if (!grades.length) {
+        document.getElementById('gradesState').textContent = 'No grades found for this student.';
+        return;
+      }
+      if (!_inputCols.length) {
+        discoverInputCols(_gradeHeaders);
+      }
+      if (!_inputCols.length) {
+        document.getElementById('gradesState').textContent = 'No grade columns found.';
+        return;
+      }
+      var thead = document.getElementById('gradesTableHead');
+      var headerRow = '<tr><th>Subject</th>';
+      _inputCols.forEach(function (c) {
+        var lc = c.toLowerCase().trim();
+        var mp = PERIOD_RE.exec(lc);
+        var me = EXAM_RE.exec(lc);
+        var label = mp ? 'Period ' + mp[1] : (me ? 'Exam ' + me[1] : c);
+        var isEx = !!me;
+        headerRow += '<th' + (isEx ? ' class="exam-th"' : '') + '>' + label + '</th>';
+      });
+      headerRow += '<th></th></tr>';
+      thead.innerHTML = headerRow;
+      var rows = grades.map(function (g) {
+        var subject = g.Subject || g.subject || '—';
+        var ridx = 'rid-' + (g.StudentID || g['Student ID'] || '').toLowerCase() + '-' + subject.toLowerCase();
+        var cells = '<td class="subject">' + subject + '</td>';
+        _inputCols.forEach(function (c) {
+          var val = String(g[c] !== undefined ? g[c] : '').trim();
+          var hasValue = val !== '' && val !== '—';
+          var gc = hasValue ? gClass(val) : '';
+          var locked = hasValue ? ' locked' : '';
+          var ro = hasValue ? ' readonly' : '';
+          var disp = hasValue ? val : '';
+          cells += '<td class="gcell">' +
+            '<input type="number" min="0" max="100" ' +
+            'class="grade-input ' + gc + locked + '" ' +
+            'id="' + ridx + '-' + c + '" ' +
+            'value="' + disp + '" ' +
+            'placeholder="—"' + ro + ' ' +
+            'data-subject="' + subject + '" data-column="' + c + '" ' +
+            'oninput="onGradeInputChange(this)" />' +
+            '</td>';
+        });
+        cells += '<td><span class="row-status" id="' + ridx + '-status"></span></td>';
+        return '<tr id="' + ridx + '">' + cells + '</tr>';
+      }).join('');
+      body.innerHTML = rows;
+      document.getElementById('gradesTableWrap').style.display = 'block';
+      document.getElementById('gradesState').style.display = 'none';
+      if (_profileEditable) {
+        document.getElementById('saveGradesBtn').style.display = 'inline-flex';
+        document.getElementById('editGradesBtn').style.display = 'inline-flex';
+      } else {
+        document.getElementById('saveGradesBtn').style.display = 'none';
+        document.getElementById('editGradesBtn').style.display = 'none';
+        var inputs = body.querySelectorAll('input');
+        inputs.forEach(function (i) { i.disabled = true; i.style.opacity = '0.6'; });
+      }
+      _gradesEditMode = false;
+    }
+
+    function onGradeInputChange(input) {
+      input.className = 'grade-input ' + gClass(input.value);
+      if (!input.classList.contains('locked')) {
+        input.classList.remove('locked');
+      }
+    }
+
+    var _gradesEditMode = false;
+
+    function toggleGradesEditMode() {
+      if (!_profileEditable) return;
+      _gradesEditMode = !_gradesEditMode;
+      var btn = document.getElementById('editGradesBtn');
+      var inputs = document.querySelectorAll('#gradesBody input');
+      if (_gradesEditMode) {
+        btn.textContent = '🔒 Lock';
+        inputs.forEach(function (inp) {
+          inp.readOnly = false;
+          inp.classList.remove('locked');
+          inp.style.opacity = '1';
+        });
+      } else {
+        btn.textContent = '✏️ Edit All';
+        inputs.forEach(function (inp) {
+          if (inp.value.trim() !== '') {
+            inp.readOnly = true;
+            inp.classList.add('locked');
+          }
+        });
+      }
+    }
+
+    async function loadStudentProfile() {
+      _studentID = qs('studentID');
+      if (!_studentID) {
+        setAlert('No student selected. Please open this page from the Manage Students list.', 'warn');
+        return;
+      }
+      try {
+        var session = getSession() || {};
+        var requestData = { studentID: _studentID };
+        if (String(session.role || '').toLowerCase() === 'teacher') {
+          requestData.teacherUsername = session.username;
+        }
+        var profile = await apiRequest('getStudentProfile', requestData);
+        if (!profile || !profile.ok) {
+          setAlert(profile.message || 'Could not load student profile.', 'warn');
+          return;
+        }
+        _student = profile.student;
+        renderProfile(_student);
+        configureProfileAccess();
+        loadStudentGrades();
+      } catch (e) {
+        setAlert('Could not reach the server.', 'warn');
+      }
+    }
+
+    function printReport() {
+      var card = document.getElementById('studentReportCard');
+      if (!card || !card.innerHTML.trim()) return;
+      window.print();
+    }
+
+    function renderReportCard(grades) {
+      var session = getSession() || {};
+      var role = String(session.role || '').toLowerCase();
+      var wrap = document.getElementById('studentReportCard');
+      var button = document.getElementById('printReportBtn');
+      if (!wrap) return;
+      if (!grades.length) {
+        wrap.innerHTML = '<div class="state-msg info"><span>ℹ️</span><span>No report card grades available.</span></div>';
+        if (button) button.style.display = 'none';
+        return;
+      }
+      if (button && role !== 'principal') {
+        button.style.display = 'none';
+      }
+      _gradeHeaders = _gradeHeaders || [];
+      var reportSkipCols = ['studentid', 'student id', 'studentname', 'student name', 'class', 'subject', 'date', 'teacher'];
+      var gradeCols = _gradeHeaders.filter(function (h) { return reportSkipCols.indexOf(String(h).toLowerCase().trim()) === -1; });
+      var s1p = [], s1e = '', s1a = '', s2p = [], s2e = '', s2a = '', yearly = '';
+      gradeCols.forEach(function (c) {
+        var lc = String(c || '').toLowerCase().trim();
+        if (YEARLY_RE.test(lc)) { yearly = c; return; }
+        var pm = PERIOD_RE.exec(lc);
+        if (pm) {
+          var n = parseInt(pm[1]);
+          if (n <= 3) s1p.push(c); else s2p.push(c);
+          return;
+        }
+        if (EXAM_RE.exec(lc)) {
+          if (!s1e) s1e = c; else s2e = c;
+          return;
+        }
+        if (SEM_AVG_RE.test(lc)) {
+          if (!s1a) s1a = c; else s2a = c;
+          return;
+        }
+      });
+
+      var rowMap = {};
+      grades.forEach(function (row) {
+        var subj = String(row.Subject || row.subject || '').trim();
+        if (subj) rowMap[subj.toLowerCase()] = row;
+      });
+      var subjects = (function () {
+        var classKey = String((_student && (_student.Class || _student.Grade)) || '').trim().toLowerCase();
+        var sheetSubjects = _subjectsByClass[classKey] || [];
+        if (sheetSubjects.length) {
+          return sheetSubjects.filter(function (s) {
+            return rowMap[String(s).trim().toLowerCase()] !== undefined;
+          });
+        }
+        return Object.keys(rowMap).map(function (k) { return rowMap[k]['Subject'] || rowMap[k]['subject'] || k; }).sort();
+      })();
+      if (!subjects.length) {
+        wrap.innerHTML = '<div class="state-msg info"><span>ℹ️</span><span>No subjects found for this student.</span></div>';
+        if (button) button.style.display = 'none';
+        return;
+      }
+
+      function addCell(row, col, isExam, isAvg) {
+        var v = row && col ? String(row[col] || '').trim() : '';
+        var cls = gradeClass(v);
+        if (!v) cls = 'g-none';
+        return '<td class="' + cls + '">' + dv(v) + '</td>';
+      }
+
+      var semRow = '<tr class="sem-hdr">' +
+        '<td class="subj-hdr" rowspan="2">SUBJECTS</td>' +
+        (s1p.length || s1e || s1a ? '<td colspan="' + (s1p.length + (s1e ? 1 : 0) + (s1a ? 1 : 0)) + '">FIRST SEMESTRE</td>' : '') +
+        (s2p.length || s2e || s2a ? '<td colspan="' + (s2p.length + (s2e ? 1 : 0) + (s2a ? 1 : 0)) + '">SECOND SEMESTRE</td>' : '') +
+        (yearly ? '<td class="yearly-th" rowspan="2" style="color:#fbbf24;font-weight:800;">Yearly<br>AVG</td>' : '') +
+        '</tr>';
+
+      var colRow = '<tr class="col-hdr">';
+      s1p.forEach(function (c) { colRow += '<th>' + pdLabel(c) + '</th>'; });
+      if (s1e) colRow += '<th class="exam-th">EXAM</th>';
+      if (s1a) colRow += '<th class="avg-th">AVG</th>';
+      s2p.forEach(function (c) { colRow += '<th>' + pdLabel(c) + '</th>'; });
+      if (s2e) colRow += '<th class="exam-th">EXAM</th>';
+      if (s2a) colRow += '<th class="avg-th">AVG</th>';
+      colRow += '</tr>';
+
+      var bodyRows = subjects.map(function (subj) {
+        var row = rowMap[subj.toLowerCase()];
+        var cells = '<td class="subj-col">' + esc(subj) + '</td>';
+        s1p.forEach(function (c) { cells += addCell(row, c, false, false); });
+        if (s1e) cells += addCell(row, s1e, true, false);
+        if (s1a) cells += addCell(row, s1a, false, true);
+        s2p.forEach(function (c) { cells += addCell(row, c, false, false); });
+        if (s2e) cells += addCell(row, s2e, true, false);
+        if (s2a) cells += addCell(row, s2a, false, true);
+        if (yearly) cells += addCell(row, yearly, false, false);
+        return '<tr>' + cells + '</tr>';
+      }).join('');
+
+      var overallAvg = '';
+      var totalAvg = 0;
+      var avgCount = 0;
+      subjects.forEach(function (subj) {
+        var row = rowMap[subj.toLowerCase()];
+        if (!row) return;
+        var v = parseFloat(String(row[yearly] || '').trim());
+        if (!isNaN(v)) { totalAvg += v; avgCount++; }
+      });
+      if (avgCount) overallAvg = (totalAvg / avgCount).toFixed(1);
+
+      var orderedCols = [].concat(s1p);
+      if (s1e) orderedCols.push(s1e);
+      if (s1a) orderedCols.push(s1a);
+      orderedCols = orderedCols.concat(s2p);
+      if (s2e) orderedCols.push(s2e);
+      if (s2a) orderedCols.push(s2a);
+      if (yearly) orderedCols.push(yearly);
+
+      var avgRow = '<tr class="avg-row"><td class="subj-col">Average</td>';
+      orderedCols.forEach(function (col) {
+        var values = subjects.map(function (subj) {
+          var row = rowMap[subj.toLowerCase()];
+          var n = parseFloat(String(row && row[col] || '').trim());
+          return isNaN(n) ? null : n;
+        }).filter(Boolean);
+        if (values.length) {
+          var sum = values.reduce(function (a, b) { return a + b; }, 0);
+          avgRow += '<td class="' + gradeClass(String(Math.round(sum / values.length))) + '">' + Math.round(sum / values.length) + '</td>';
+        } else {
+          avgRow += '<td class="g-none">—</td>';
+        }
+      });
+      avgRow += '</tr>';
+      avgRow += '<tr class="rank-row"><td class="subj-col">Ranks</td>' + orderedCols.map(function () { return '<td></td>'; }).join('') + '</tr>';
+      var conductLabel = 'Good';
+      var oa = parseFloat(overallAvg);
+      if (!isNaN(oa)) {
+        if (oa >= 95) conductLabel = 'Excellent';
+        else if (oa >= 90) conductLabel = 'Very Good';
+        else if (oa >= 80) conductLabel = 'Good';
+        else if (oa >= 70) conductLabel = 'Average';
+        else conductLabel = 'Poor';
+      }
+      avgRow += '<tr class="conduct-row"><td class="subj-col">Conduct</td><td colspan="' + orderedCols.length + '" style="text-align:center;font-weight:700;letter-spacing:0.05em;">' + conductLabel + '</td></tr>';
+
+      var card = '' +
+        '<div class="rc-wrapper">' +
+        '<div class="rc-watermark"></div>' +
+        '<div class="rc-school-hdr">' +
+        '<p class="sch-name">AJB Leaders Academy</p>' +
+        '<p class="sch-sub">Diamond Creek, Soul Clinic Community • Paynesville City, Liberia</p>' +
+        '<p class="sch-card-label">Student Progress Report Card</p>' +
+        '</div>' +
+        '<div class="rc-info-row">' +
+        '<div class="rc-info-field"><label>Student</label><div class="rc-info-val">' + esc(_student.FullName || _student.StudentName || '—') + '</div></div>' +
+        '<div class="rc-info-field" style="max-width:110px;"><label>Grade</label><div class="rc-info-val">' + esc(_student.Class || _student.Grade || '—') + '</div></div>' +
+        '<div class="rc-info-field" style="max-width:160px;"><label>Academic Year</label><div class="rc-info-val">' + esc(_student.AcademicYear || '—') + '</div></div>' +
+        (overallAvg ? '<div class="rc-info-field" style="max-width:120px;"><label>Overall Avg</label><div class="rc-info-val ' + gradeClass(overallAvg) + '">' + Math.round(parseFloat(overallAvg)) + '%</div></div>' : '') +
+        '</div>' +
+        '<div class="rc-table-scroll"><table class="rc-grade-table"><thead>' + semRow + colRow + '</thead><tbody>' + bodyRows + avgRow + '</tbody></table></div>' +
+        '<div class="rc-footer">' +
+        '<div class="rc-grading-key"><strong>Grading Method</strong><span>A 95 – 100 = Excellent</span><span>B 90 – 94 = Very Good</span><span>C 80 – 89 = Good</span><span>D 70 – 79 = Average</span><span>E Below 70 = Poor</span></div>' +
+        '<div class="rc-promotion"><strong>Promotion Statement</strong><p>This certifies that <span class="fill-line">' + esc(_student.FullName || _student.StudentName || '—') + '</span> has / has not satisfactorily completed the work of Grade <span class="fill-line short">' + esc(_student.Class || _student.Grade || '—') + '</span> and is:</p><div class="promo-option"><span class="chk">☐</span> A. Promoted to Grade <span class="fill-line short">&nbsp;</span></div><div class="promo-option"><span class="chk">☐</span> B. Conditioned in <span class="fill-line short">&nbsp;</span></div><div class="promo-option"><span class="chk">☐</span> C. Required to repeat the grade.</div><div class="promo-option"><span class="chk">☐</span> D. Asked not to enroll next year.</div></div>' +
+        '<div class="rc-motto"><strong>Motto</strong>Creating New Generation of Excellence</div>' +
+        '</div>' +
+        '<div class="rc-sig-row"><div class="sig-block"><div class="sig-line"></div><div class="sig-label">Class Teacher\'s Signature</div></div><div class="sig-block"><div class="sig-line"></div><div class="sig-label">Principal\'s Signature</div></div><div class="sig-block"><div class="sig-line" style="width:120px;"></div><div class="sig-label">Date</div></div></div>' +
+        '</div>';
+
+      wrap.innerHTML = card;
+      if (button) {
+        if (String(session.role || '').trim().toLowerCase() !== 'principal') {
+          button.style.display = 'none';
+          button.disabled = true;
+        } else {
+          button.style.display = 'inline-flex';
+          button.disabled = false;
+        }
+      }
+    }
+
+    function pdLabel(colName) {
+      var m = PERIOD_RE.exec(String(colName || '').toLowerCase());
+      if (m) return m[1] + 'th pd';
+      return String(colName || '').trim();
+    }
+
+    function gradeClass(v) {
+      var n = parseFloat(String(v || '').trim());
+      if (isNaN(n) || v === '' || v === '—') return 'g-none';
+      if (n >= 90) return 'g-green';
+      if (n >= 70) return 'g-blue';
+      if (n >= 60) return 'g-red';
+      return 'g-none';
+    }
+
+    function dv(v) {
+      if (v === '' || v === '—' || v === undefined || v === null) return '<span class="g-none">—</span>';
+      var n = parseFloat(String(v).trim());
+      return isNaN(n) ? esc(v) : Math.round(n);
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function loadStudentGrades() {
+      try {
+        var session = getSession() || {};
+        var requestData = {};
+        if (String(session.role || '').toLowerCase() === 'teacher') {
+          requestData.teacherUsername = session.username;
+        }
+        var res = await apiRequest('getGrades', requestData);
+        if (!res || !res.ok) {
+          setAlert(res.message || 'Unable to load grades.', 'warn');
+          return;
+        }
+        try {
+          var subjRes = await apiRequest('getSubjects', {});
+          if (subjRes && subjRes.ok && subjRes.subjectsByClass) {
+            _subjectsByClass = subjRes.subjectsByClass;
+          }
+        } catch (eSubj) { /* non-fatal */ }
+        var headers = (res.grades || [])[0] || [];
+        _gradeHeaders = headers.map(function (h) { return String(h).trim(); });
+        discoverInputCols(_gradeHeaders);
+        var allGrades = (res.grades || []).slice(1).map(function (row) {
+          var g = {};
+          headers.forEach(function (h, idx) {
+            g[String(h).trim()] = row[idx];
+          });
+          return g;
+        });
+        var filtered = allGrades.filter(function (g) {
+          return String(g.StudentID || g['Student ID'] || '').trim().toLowerCase() === _studentID.toLowerCase();
+        });
+        _grades = filtered;
+        renderGrades(filtered);
+        renderReportCard(filtered);
+      } catch (e) {
+        setAlert('Could not load grades.', 'warn');
+      }
+    }
+
+    function openEditProfile() {
+      if (!_profileEditable) return;
+      document.getElementById('profileEditPanel').style.display = 'block';
+      document.getElementById('editProfileMsg').style.display = 'none';
+    }
+
+    function cancelProfileEdit() {
+      document.getElementById('profileEditPanel').style.display = 'none';
+    }
+
+    async function saveProfileInfo() {
+      if (!_profileEditable) {
+        setAlert('You do not have permission to save profile changes.', 'warn');
+        return;
+      }
+      var fullName = document.getElementById('editFullName').value.trim();
+      var gender = document.getElementById('editGender').value.trim();
+      var className = document.getElementById('editClass').value.trim();
+      var academicYear = document.getElementById('editYear').value.trim();
+      var dateOfBirth = document.getElementById('editDateOfBirth').value;
+      var parentName = document.getElementById('editParentName').value.trim();
+      var parentPhone = document.getElementById('editParentPhone').value.trim();
+      var address = document.getElementById('editAddress').value.trim();
+      var enrollmentDate = document.getElementById('editEnrollmentDate').value;
+      var msg = document.getElementById('editProfileMsg');
+      msg.style.display = 'flex';
+      msg.textContent = 'Saving profile…';
+      try {
+        var session = getSession() || {};
+        var result = await apiRequest('updateStudent', {
+          studentID: _studentID,
+          fullName,
+          gender,
+          className,
+          studentClass: className,
+          academicYear,
+          dateOfBirth,
+          parentName,
+          parentPhone,
+          address,
+          enrollmentDate,
+          requesterRole: session.role || '',
+        });
+        if (result && result.ok) {
+          msg.textContent = 'Profile saved.';
+          msg.className = 'state-msg info';
+          await loadStudentProfile();
+          document.getElementById('profileEditPanel').style.display = 'none';
+        } else {
+          msg.textContent = result.message || 'Failed to save profile.';
+          msg.className = 'state-msg warn';
+        }
+      } catch (e) {
+        msg.textContent = 'Could not save profile.';
+        msg.className = 'state-msg warn';
+      }
+    }
+
+    async function saveProfileGrades() {
+      if (!_profileEditable) {
+        setAlert('You do not have permission to save grades.', 'warn');
+        return;
+      }
+      var gradeInputs = document.querySelectorAll('#gradesBody input');
+      var grades = [];
+      gradeInputs.forEach(function (input) {
+        var subject = input.dataset.subject;
+        var column = input.dataset.column;
+        var value = input.value.trim();
+        if (!subject) return;
+        var existing = grades.find(function (item) { return item.subject === subject; });
+        if (!existing) {
+          existing = { subject: subject, values: {} };
+          grades.push(existing);
+        }
+        if (value !== '') {
+          existing.values[column] = value;
+        }
+      });
+      if (!grades.length) {
+        setAlert('No grade edits were detected.', 'warn');
+        return;
+      }
+      var btn = document.getElementById('saveGradesBtn');
+      var status = document.getElementById('saveGradesStatus');
+      var originalLabel = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Saving…';
+        btn.style.opacity = '0.7';
+      }
+      if (status) {
+        status.style.display = 'flex';
+        status.textContent = 'Saving…';
+        status.className = 'state-msg info';
+      }
+      try {
+        var session = getSession() || {};
+        var result = await apiRequest('saveStudentGrades', {
+          studentID: _studentID,
+          className: _student.Class || _student.Grade || '',
+          grades: grades,
+          overwrite: true,
+          requesterRole: session.role || '',
+        });
+        if (result && result.ok) {
+          if (status) {
+            status.textContent = '✅ Saved';
+            status.className = 'state-msg info';
+          }
+          if (btn) {
+            btn.innerHTML = '✅ Saved';
+          }
+          setAlert('Grades saved successfully.', 'info');
+          await loadStudentGrades();
+          setTimeout(function () {
+            if (status) {
+              status.style.display = 'none';
+              status.textContent = '';
+            }
+            if (btn) {
+              btn.innerHTML = originalLabel;
+              btn.style.opacity = '';
+              btn.disabled = false;
+            }
+          }, 2000);
+        } else {
+          if (status) {
+            status.textContent = '❌ ' + (result && result.message ? result.message : 'Could not save grades.');
+            status.className = 'state-msg warn';
+          }
+          if (btn) {
+            btn.innerHTML = originalLabel;
+            btn.style.opacity = '';
+            btn.disabled = false;
+          }
+          setAlert(result.message || 'Could not save grades.', 'warn');
+        }
+      } catch (e) {
+        if (status) {
+          status.textContent = '❌ Could not save grades.';
+          status.className = 'state-msg warn';
+        }
+        if (btn) {
+          btn.innerHTML = originalLabel;
+          btn.style.opacity = '';
+          btn.disabled = false;
+        }
+        setAlert('Could not save grades.', 'warn');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadStudentProfile();
+    });
+  </script>
+</body>
+
+</html>

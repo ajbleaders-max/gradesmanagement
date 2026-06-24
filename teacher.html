@@ -565,10 +565,12 @@
       }
 
       document.getElementById('studentList').innerHTML =
-        '<table><thead><tr><th>Student ID</th><th>Full Name</th><th>Gender</th><th>Class</th><th>Academic Year</th></tr></thead><tbody>' +
+        '<table><thead><tr><th>Student ID</th><th>Full Name</th><th>Gender</th><th>Class</th><th>Academic Year</th><th>Action</th></tr></thead><tbody>' +
         visible.map(function(s){
           return '<tr><td>'+(s.StudentID||'')+'</td><td>'+(s.FullName||'')+'</td><td>'+
-            (s.Gender||'')+'</td><td>'+(s.Class||'')+'</td><td>'+(s.AcademicYear||'')+'</td></tr>';
+            (s.Gender||'')+'</td><td>'+(s.Class||'')+'</td><td>'+(s.AcademicYear||'')+'</td>' +
+            '<td><button class="act-btn act-view" onclick="openStudentProfile(\''+
+            (s.StudentID||'').replace(/'/g, "\\'") + '\')">View Profile</button></td></tr>';
         }).join('') + '</tbody></table>';
 
       if (countEl) {
@@ -597,10 +599,29 @@
       renderMyStudents(filtered, false);
     };
 
+    window.openStudentProfile = function(studentID) {
+      if (!studentID) return;
+      window.location.href = 'student_profile.html?studentID=' + encodeURIComponent(studentID);
+    };
+
   </script>
   <style>
     .load-more-btn { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; padding: 8px 22px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: background 0.2s; margin-top:4px; }
     .load-more-btn:hover { background: rgba(99,102,241,0.25); }
+
+    .act-btn.act-view {
+      background: rgba(37,99,235,0.15);
+      border: 1px solid rgba(37,99,235,0.3);
+      color: #bfdbfe;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s;
+    }
+    .act-btn.act-view:hover {
+      background: rgba(37,99,235,0.25);
+    }
 
     /* ── MOBILE RESPONSIVE ── */
     @media (max-width: 700px) {
