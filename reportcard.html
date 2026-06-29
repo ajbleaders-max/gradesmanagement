@@ -169,7 +169,7 @@
       min-width:640px;
     }
 
-    /* Section header rows (FIRST SEMESTRE / SECOND SEMESTRE) */
+    /* Section header rows (FIRST SEMESTER / SECOND SEMESTER) */
     .rc-grade-table .sem-hdr td {
       background:rgba(37,99,235,0.18);
       color:#93c5fd; font-weight:800;
@@ -625,14 +625,14 @@
     }
 
     // ── Build header rows ──
-    // Row 1: SUBJECTS | FIRST SEMESTRE (span) | | SECOND SEMESTRE (span) | | Yearly AVG
+    // Row 1: SUBJECTS | FIRST SEMESTER (span) | | SECOND SEMESTER (span) | | Yearly AVG
     var s1Span = cs.s1p.length + (cs.s1e?1:0) + (cs.s1a?1:0);
     var s2Span = cs.s2p.length + (cs.s2e?1:0) + (cs.s2a?1:0);
 
     var semRow = '<tr class="sem-hdr">' +
       '<td class="subj-hdr" rowspan="2">SUBJECTS</td>' +
-      (s1Span ? '<td colspan="'+s1Span+'">FIRST SEMESTRE</td>' : '') +
-      (s2Span ? '<td colspan="'+s2Span+'">SECOND SEMESTRE</td>' : '') +
+      (s1Span ? '<td colspan="'+s1Span+'">FIRST SEMESTER</td>' : '') +
+      (s2Span ? '<td colspan="'+s2Span+'">SECOND SEMESTER</td>' : '') +
       (cs.yearly ? '<td class="yearly-th" rowspan="2" style="color:#fbbf24;font-weight:800;">Yearly<br>AVG</td>' : '') +
     '</tr>';
 
