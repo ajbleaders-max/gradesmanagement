@@ -59,7 +59,22 @@ before switching the deployment over — see "Migrating existing data" below.
    to make them by hand.)
 
 ### USERS sheet
-| ID | Role | Username | PasswordHash | Salt | FullName | AssignedClasses | AssignedSubjects | PhotoLink | Status | Phone |
+| ID | Role | Username | PasswordHash | Salt | FullName | AssignedClasses | AssignedSubjects | AssignedAcademicYear | PhotoLink | Status | Phone |
+
+`AssignedAcademicYear` (teachers only) decides which year's `ENROLL_<year>`
+and `GRADES_<year>` sheets that teacher can see and grade in — **not**
+`SETTINGS!AcademicYear`. This is what lets a principal freely switch the
+school's "current year" to check old records without interrupting a teacher
+who is actively entering grades: the teacher's own dashboard and every save
+they make always target the year on their profile, no matter what
+`SETTINGS!AcademicYear` is set to at that moment. The principal moves a
+teacher to a new year explicitly, from Manage Teachers, when that teacher is
+actually ready to start working in it — see "Starting a new academic year"
+below.
+
+If this column is missing from an existing spreadsheet, the app adds it
+automatically the next time a teacher is added or edited; you don't need to
+add it by hand.
 
 You can't hand-write a real `PasswordHash`/`Salt` pair easily, so create your
 first principal account with a temporary row (leave PasswordHash/Salt blank),
@@ -156,6 +171,19 @@ From **Manage Students**, principals can:
   individual classes afterward as needed). Withdrawn/Graduated/Transferred
   students are not carried forward. Grades never carry forward — each year
   starts with a clean `GRADES_<year>` sheet.
+
+Note that this does **not** move any teacher into the new year — see below.
+
+### Moving teachers into the new year
+Starting a new academic year does not touch any teacher's
+`AssignedAcademicYear`. Existing teachers keep working in whatever year
+they're already assigned to, even after the school-wide "current year"
+changes, so nobody's in-progress grading is interrupted by the switch. When
+a teacher is actually ready to start entering grades for the new year, the
+principal moves them individually from **Manage Teachers** (edit teacher →
+change Academic Year). Do this per teacher, on your own schedule — there's
+no bulk "move everyone forward" action by design, since teachers often
+finish up the old year's grades at different times.
 
 ## Notes
 - The frontend uses fetch() and static hosting.

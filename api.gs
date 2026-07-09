@@ -9,7 +9,12 @@
  *      - ENROLL_<year>    : that student's Class + Status for a single
  *                           academic year (e.g. ENROLL_2025_2026).
  *    A student's row is never deleted when they leave — their Status
- *    changes to Withdrawn / Graduated / Transferred / Suspended instead.
+ *    changes to Drop / Graduated / Transferred / Suspended instead.
+    "Drop" replaces the old "Withdrawn" — it means the student left for good.
+ *    "Drop" means the student has left the school for good: teachers no
+ *    longer see them (in class lists, profiles, or grade entry) and they
+ *    are excluded from the "total students" dashboard count. Principals
+ *    can still see and manage Dropped students from Manage Students.
  *
  * 2. GRADES is split per year too: GRADES_<year> (e.g. GRADES_2025_2026),
  *    each with its own AcademicYear column. This keeps every year's
@@ -44,7 +49,11 @@ const STUDENT_MASTER_HEADERS = [
   "ParentName", "ParentPhone", "Address", "EnrollmentDate",
 ];
 const SESSION_HEADERS = ["Token", "Username", "Role", "Status", "ExpiresAt"];
-const STUDENT_STATUSES = ["Active", "Withdrawn", "Graduated", "Transferred", "Suspended"];
+const STUDENT_STATUSES = ["Active", "Drop", "Graduated", "Transferred", "Suspended"];
+// Statuses that mean "no longer part of the school" — hidden from teachers
+// and excluded from the "total students" count. Currently just Drop, kept
+// as a list in case Graduated/Transferred should also be excluded later.
+const HIDDEN_FROM_TEACHERS_STATUSES = ["drop"];
 const SESSION_LIFETIME_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 // Which roles may call each action. 'public' = no session needed.
@@ -65,6 +74,7 @@ const ACTION_ROLES = {
   deleteStudent: ["principal"],
   setStudentStatus: ["principal"],
   promoteStudents: ["principal"],
+  promoteStudent: ["principal"],
   createAcademicYear: ["principal"],
   listAcademicYears: ["principal"],
   getStudentProfile: ["principal", "teacher"],
@@ -78,7 +88,7 @@ const ACTION_ROLES = {
 
 // ── Entry points ─────────────────────────────────────────────────────────
 
-const API_VERSION = "v2.1-2026-07-09";
+const API_VERSION = "v2.3-2026-07-09";
 
 function doGet(e) {
   return ContentService.createTextOutput(
@@ -133,6 +143,7 @@ function doPost(e) {
       case "deleteStudent": return deleteStudent(data, session);
       case "setStudentStatus": return setStudentStatus(data, session);
       case "promoteStudents": return promoteStudents(data, session);
+      case "promoteStudent": return promoteStudent(data, session);
       case "createAcademicYear": return createAcademicYear(data, session);
       case "listAcademicYears": return listAcademicYears();
       case "getStudentProfile": return getStudentProfile(data, session);
@@ -296,6 +307,32 @@ function getSettings_() {
 
 function getCurrentYear_() {
   return String(getSettings_().AcademicYear || "").trim();
+}
+
+function findUserByUsername_(username) {
+  return readSheetRows("USERS").find(function (u) {
+    return String(u.Username || "").trim().toLowerCase() === String(username || "").trim().toLowerCase();
+  });
+}
+
+// Teachers are pinned to whatever year is written on their own USERS row
+// (AssignedAcademicYear), set by the principal in Manage Teachers. This is
+// intentionally NOT overridable by anything the client sends and does NOT
+// follow SETTINGS!AcademicYear: it does not matter what the principal has
+// the global "current year" set to elsewhere, and it does not matter what a
+// buggy or malicious frontend request claims as academicYear. A teacher can
+// only ever see and grade the year written on their own account, until a
+// principal explicitly moves them to a different one.
+//
+// Falls back to the global current year only for legacy teacher rows that
+// predate this field and have never been assigned one.
+function resolveRequestYear_(data, session) {
+  if (session && session.role === "teacher") {
+    const teacher = findUserByUsername_(session.username);
+    const assigned = teacher ? String(teacher.AssignedAcademicYear || "").trim() : "";
+    return assigned || getCurrentYear_();
+  }
+  return (data && data.academicYear) ? String(data.academicYear).trim() : getCurrentYear_();
 }
 
 function yearKey_(year) {
@@ -504,7 +541,7 @@ function updateStudent(data, session) {
   return jsonResponse(true, "Student updated.");
 }
 
-// Change a student's status for a given year (Active/Withdrawn/Graduated/
+// Change a student's status for a given year (Active/Drop/Graduated/
 // Transferred/Suspended). This is a soft change — the row is never removed,
 // so the student still shows up in dashboards/history for that year.
 function setStudentStatus(data, session) {
@@ -531,10 +568,10 @@ function setStudentStatus(data, session) {
 }
 
 // Kept for backward compatibility with the existing "Delete" button in the
-// admin UI — it no longer deletes anything. It marks the student Withdrawn
+// admin UI — it no longer deletes anything. It marks the student Drop
 // (or whatever status is passed) for the given year instead.
 function deleteStudent(data, session) {
-  const status = String(data.status || "").trim() || "Withdrawn";
+  const status = String(data.status || "").trim() || "Drop";
   return setStudentStatus(Object.assign({}, data, { status: status }), session);
 }
 
@@ -579,6 +616,53 @@ function promoteStudents(data, session) {
   );
 }
 
+// Promote ONE student to a new academic year, called from that student's
+// profile page instead of the old bulk "Promote Active Students" button.
+// Only an Active student may be promoted. Class carries over unless a
+// newClass is given.
+function promoteStudent(data, session) {
+  if (!session || session.role !== "principal")
+    return jsonResponse(false, "Only principals may promote students.");
+
+  const studentID = String(data.studentID || data.studentId || "").trim();
+  const fromYear = String(data.fromYear || "").trim() || getCurrentYear_();
+  const toYear = String(data.toYear || "").trim();
+  const newClass = String(data.newClass || data.className || data.studentClass || "").trim();
+
+  if (!studentID) return jsonResponse(false, "Student ID is required.");
+  if (!toYear) return jsonResponse(false, "Target academic year is required.");
+  if (yearKey_(fromYear) === yearKey_(toYear))
+    return jsonResponse(false, "From year and to year must be different.");
+
+  const fromEnroll = getEnrollmentSheet_(fromYear, false);
+  if (!fromEnroll) return jsonResponse(false, "No enrollment records found for " + fromYear + ".");
+  const current = readSheetRowsFromSheet_(fromEnroll).find(function (r) {
+    return String(r.StudentID || "").trim().toLowerCase() === studentID.toLowerCase();
+  });
+  if (!current) return jsonResponse(false, "Student is not enrolled for " + fromYear + ".");
+  if (String(current.Status || "").trim().toLowerCase() !== "active") {
+    return jsonResponse(
+      false,
+      "Only Active students can be promoted. This student's status for " + fromYear +
+        " is " + current.Status + ".",
+    );
+  }
+
+  const toEnroll = getEnrollmentSheet_(toYear, true);
+  const already = toEnroll.getDataRange().getValues().slice(1).some(function (row) {
+    return String(row[0] || "").toLowerCase() === studentID.toLowerCase();
+  });
+  if (already) return jsonResponse(false, "This student is already enrolled for " + toYear + ".");
+
+  const classValue = newClass || String(current.Class || "").trim();
+  toEnroll.appendRow([studentID, classValue, "Active", toYear]);
+  getGradesSheetForYear_(toYear, true); // make sure the year's grades sheet exists
+
+  return jsonResponse(true, "Student promoted to " + toYear + ".", {
+    studentID: studentID, toYear: toYear, className: classValue,
+  });
+}
+
 function createAcademicYear(data, session) {
   if (!session || session.role !== "principal")
     return jsonResponse(false, "Only principals may create a new academic year.");
@@ -620,7 +704,7 @@ function listAcademicYears() {
 function getStudentProfile(data, session) {
   const studentID = String(data.studentID || data.studentId || "").trim();
   if (!studentID) return jsonResponse(false, "Student ID is required.");
-  const year = String(data.academicYear || "").trim() || getCurrentYear_();
+  const year = resolveRequestYear_(data, session);
 
   const student = getMergedStudents_(year).find(function (s) {
     return String(s.StudentID || "").trim().toLowerCase() === studentID.toLowerCase();
@@ -628,6 +712,9 @@ function getStudentProfile(data, session) {
   if (!student) return jsonResponse(false, "Student not found for " + year + ".");
 
   if (session && session.role === "teacher") {
+    if (HIDDEN_FROM_TEACHERS_STATUSES.indexOf(String(student.Status || "").trim().toLowerCase()) !== -1) {
+      return jsonResponse(false, "This student is no longer enrolled.");
+    }
     const teacher = readSheetRows("USERS").find(function (u) {
       return String(u.Username || "").trim().toLowerCase() === session.username.toLowerCase();
     });
@@ -649,28 +736,44 @@ function getStudentProfile(data, session) {
 function getDashboardSummary(data, session) {
   const year = (data && data.academicYear) ? String(data.academicYear).trim() : getCurrentYear_();
   const users = readSheetRows("USERS");
-  const students = getMergedStudents_(year); // ALL statuses — nothing hidden here on purpose
+  // allStudents keeps EVERY status (principal still needs to find/manage
+  // Dropped students from Manage Students). activeStudents excludes Drop —
+  // that's what feeds the "total students" count and class list.
+  const allStudents = getMergedStudents_(year);
+  const activeStudents = allStudents.filter(function (s) {
+    return HIDDEN_FROM_TEACHERS_STATUSES.indexOf(String(s.Status || "").trim().toLowerCase()) === -1;
+  });
   const grades = readSheetRowsFromSheet_(getGradesSheetForYear_(year, false));
 
   const principals = users.filter(function (u) { return String(u.Role || "").toLowerCase() === "principal"; });
   const teachers = users.filter(function (u) { return String(u.Role || "").toLowerCase() === "teacher"; });
-  const classNames = students.map(function (s) { return String(s.Class || "").trim(); })
+  const classNames = activeStudents.map(function (s) { return String(s.Class || "").trim(); })
     .filter(Boolean).filter(function (v, i, a) { return a.indexOf(v) === i; });
 
   return jsonResponse(true, "Dashboard loaded.", {
     academicYear: year,
     principals: principals.length,
     teachers: teachers.length,
-    students: students.length,
+    students: activeStudents.length, // Dropped students excluded from the total
     grades: grades.length,
     classes: classNames.length,
     recentTeachers: teachers.slice().reverse().slice(0, 5),
-    recentStudents: students.slice().reverse().slice(0, 5),
-    allStudents: students,
+    recentStudents: activeStudents.slice().reverse().slice(0, 5),
+    allStudents: allStudents, // full list, all statuses — for principal management screens
   });
 }
 
 // ── Teachers ─────────────────────────────────────────────────────────────
+
+function ensureUsersAssignedYearColumn_() {
+  const sheet = ss_().getSheetByName("USERS");
+  if (!sheet) return;
+  const lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return;
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+  const has = headers.some(function (h) { return h.toLowerCase().replace(/\s+/g, "") === "assignedacademicyear"; });
+  if (!has) sheet.getRange(1, lastCol + 1).setValue("AssignedAcademicYear");
+}
 
 function addTeacher(data, session) {
   const username = String(data.username || "").trim();
@@ -678,6 +781,7 @@ function addTeacher(data, session) {
   const fullName = String(data.fullName || "").trim();
   const assignedClasses = String(data.assignedClasses || "ALL").trim();
   const assignedSubjects = String(data.assignedSubjects || "ALL").trim();
+  const assignedAcademicYear = String(data.assignedAcademicYear || "").trim() || getCurrentYear_();
   const phone = String(data.phone || "").trim();
   const status = String(data.status || "active").trim();
   const photoLink = String(data.photoLink || "").trim();
@@ -687,6 +791,7 @@ function addTeacher(data, session) {
 
   const sheet = ss_().getSheetByName("USERS");
   if (!sheet) return jsonResponse(false, "USERS sheet not found.");
+  ensureUsersAssignedYearColumn_();
   const rows = sheet.getDataRange().getValues();
   const headers = rows[0].map(function (h) { return String(h).trim(); });
   const usernameCol = headers.indexOf("Username");
@@ -714,6 +819,7 @@ function addTeacher(data, session) {
   set("FullName", fullName);
   set("AssignedClasses", assignedClasses);
   set("AssignedSubjects", assignedSubjects);
+  set("AssignedAcademicYear", assignedAcademicYear);
   set("PhotoLink", photoLink);
   set("Status", status);
   set("Phone", phone);
@@ -744,6 +850,7 @@ function updateTeacher(data, session) {
   const password = String(data.password || "").trim();
   const assignedClasses = String(data.assignedClasses || "").trim();
   const assignedSubjects = String(data.assignedSubjects || "").trim();
+  const assignedAcademicYear = String(data.assignedAcademicYear || "").trim();
   const phone = String(data.phone || "").trim();
   const status = String(data.status || "").trim();
   const photoLink = String(data.photoLink || "").trim();
@@ -751,6 +858,7 @@ function updateTeacher(data, session) {
 
   const sheet = ss_().getSheetByName("USERS");
   if (!sheet) return jsonResponse(false, "USERS sheet not found.");
+  ensureUsersAssignedYearColumn_();
   const rows = sheet.getDataRange().getValues();
   const headers = rows[0].map(function (h) { return String(h).trim(); });
   const index = findRowIndex(rows, "Username", username);
@@ -766,6 +874,7 @@ function updateTeacher(data, session) {
   }
   if (assignedClasses) set("AssignedClasses", assignedClasses);
   if (assignedSubjects) set("AssignedSubjects", assignedSubjects);
+  if (assignedAcademicYear) set("AssignedAcademicYear", assignedAcademicYear);
   if (photoLink !== undefined && headers.indexOf("PhotoLink") >= 0) set("PhotoLink", photoLink);
   if (phone !== undefined && headers.indexOf("Phone") >= 0) set("Phone", phone);
   if (status) set("Status", status);
@@ -803,7 +912,7 @@ function getTeacherData(data, session) {
   });
   if (!teacher) return jsonResponse(false, "Teacher not found.");
 
-  const year = getCurrentYear_();
+  const year = String(teacher.AssignedAcademicYear || "").trim() || getCurrentYear_();
   const assignedClasses = String(teacher.AssignedClasses || "ALL").trim();
   const assignedSubjects = String(teacher.AssignedSubjects || "ALL").trim();
   const isAllClasses = assignedClasses.toUpperCase() === "ALL";
@@ -811,7 +920,9 @@ function getTeacherData(data, session) {
   const classList = assignedClasses.toLowerCase().split(",").map(function (c) { return c.trim(); });
   const subjectList = assignedSubjects.toLowerCase().split(",").map(function (s) { return s.trim(); });
 
-  const allStudents = getMergedStudents_(year);
+  const allStudents = getMergedStudents_(year).filter(function (s) {
+    return HIDDEN_FROM_TEACHERS_STATUSES.indexOf(String(s.Status || "").trim().toLowerCase()) === -1;
+  });
   const students = isAllClasses ? allStudents : allStudents.filter(function (s) {
     return classList.indexOf(String(s.Class || "").trim().toLowerCase()) !== -1;
   });
@@ -855,6 +966,7 @@ function getTeacherData(data, session) {
     students: students,
     grades: grades,
     classSubjects: classSubjects,
+    academicYear: year,
     gradeHeaders: gradesSheet
       ? gradesSheet.getRange(1, 1, 1, gradesSheet.getLastColumn()).getValues()[0]
           .map(function (h) { return String(h).trim(); }).filter(Boolean)
@@ -865,7 +977,7 @@ function getTeacherData(data, session) {
 // ── Grades ───────────────────────────────────────────────────────────────
 
 function getGrades(data, session) {
-  const year = (data && data.academicYear) ? String(data.academicYear).trim() : getCurrentYear_();
+  const year = resolveRequestYear_(data, session);
   const sheet = getGradesSheetForYear_(year, false);
   if (!sheet) return jsonResponse(true, "Grades loaded.", { grades: [], academicYear: year });
   const rows = sheet.getDataRange().getValues();
@@ -898,6 +1010,17 @@ function getGrades(data, session) {
   const classCol = headers.findIndex(function (h) { return String(h || "").trim().toLowerCase() === "class"; });
   const subjectCol = headers.findIndex(function (h) { return String(h || "").trim().toLowerCase() === "subject"; });
 
+  // Build a set of "Drop" student IDs for this year so teachers don't see their grades.
+  var droppedStudentIDs = {};
+  if (session && session.role === "teacher") {
+    const enrollRows = readSheetRowsFromSheet_(getEnrollmentSheet_(year, false)) || [];
+    enrollRows.forEach(function (e) {
+      if (HIDDEN_FROM_TEACHERS_STATUSES.indexOf(String(e.Status || "").trim().toLowerCase()) !== -1) {
+        droppedStudentIDs[String(e.StudentID || "").trim().toLowerCase()] = true;
+      }
+    });
+  }
+
   const filteredRows = rows.filter(function (row, index) {
     if (index === 0) return true;
     const rowClass = classCol >= 0 ? String(row[classCol] || "").trim().toLowerCase() : "";
@@ -905,7 +1028,15 @@ function getGrades(data, session) {
     const classAllowed = isAllClasses || classList.indexOf(rowClass) !== -1;
     if (!classAllowed) return false;
     if (isAllSubjects) return true;
-    return subjectList.indexOf(rowSubject) !== -1;
+    const subjAllowed = subjectList.indexOf(rowSubject) !== -1;
+    if (!subjAllowed) return false;
+    // Teachers: hide grades for Drop students
+    if (session && session.role === "teacher") {
+      const sidCol = headers.findIndex(function (h) { return String(h || "").trim().toLowerCase() === "studentid"; });
+      const sid = sidCol >= 0 ? String(row[sidCol] || "").trim().toLowerCase() : "";
+      if (droppedStudentIDs[sid]) return false;
+    }
+    return true;
   });
 
   return jsonResponse(true, "Grades loaded.", { grades: filteredRows, academicYear: year });
@@ -920,6 +1051,8 @@ function saveGrade(data, session) {
 
   if (!studentID || !subject) return jsonResponse(false, "Student ID and subject are required.");
 
+  const year = resolveRequestYear_(data, session);
+
   if (session.role === "teacher") {
     const teacher = readSheetRows("USERS").find(function (u) {
       return String(u.Username || "").toLowerCase() === session.username.toLowerCase();
@@ -927,9 +1060,22 @@ function saveGrade(data, session) {
     const tStatus = teacher ? String(teacher.Status || "active").trim().toLowerCase() : "active";
     if (tStatus === "inactive") return jsonResponse(false, "Your account is inactive. You cannot save grades.");
     if (tStatus === "blocked") return jsonResponse(false, "Your account has been blocked. You cannot save grades.");
+
+    // Block teachers from saving grades for Drop students
+    const enrollSheet = getEnrollmentSheet_(year, false);
+    if (enrollSheet) {
+      const eRows = enrollSheet.getDataRange().getValues();
+      const eIdx = findRowIndex(eRows, "StudentID", studentID);
+      if (eIdx >= 0) {
+        const eHeaders = eRows[0].map(function (h) { return String(h).trim(); });
+        const status = String(eRows[eIdx + 1][eHeaders.indexOf("Status")] || "").trim().toLowerCase();
+        if (HIDDEN_FROM_TEACHERS_STATUSES.indexOf(status) !== -1) {
+          return jsonResponse(false, "This student is no longer enrolled. You cannot save grades for them.");
+        }
+      }
+    }
   }
 
-  const year = getCurrentYear_();
   const sheet = getGradesSheetForYear_(year, true);
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
@@ -1002,7 +1148,23 @@ function saveStudentGrades(data, session) {
   if (!studentID) return jsonResponse(false, "Student ID is required.");
   if (!Array.isArray(grades) || grades.length === 0) return jsonResponse(false, "No grades to save.");
 
-  const year = getCurrentYear_();
+  const year = String(data.academicYear || "").trim() || getCurrentYear_();
+
+  // Block teachers from saving grades for Drop students
+  if (session && session.role === "teacher") {
+    const enrollSheet = getEnrollmentSheet_(year, false);
+    if (enrollSheet) {
+      const eRows = enrollSheet.getDataRange().getValues();
+      const eIdx = findRowIndex(eRows, "StudentID", studentID);
+      if (eIdx >= 0) {
+        const eHeaders = eRows[0].map(function (h) { return String(h).trim(); });
+        const status = String(eRows[eIdx + 1][eHeaders.indexOf("Status")] || "").trim().toLowerCase();
+        if (HIDDEN_FROM_TEACHERS_STATUSES.indexOf(status) !== -1) {
+          return jsonResponse(false, "This student is no longer enrolled. You cannot save grades for them.");
+        }
+      }
+    }
+  }
   const sheet = getGradesSheetForYear_(year, true);
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
@@ -1061,8 +1223,25 @@ function saveStudentGrades(data, session) {
 }
 
 function generateReport(data, session) {
+  const studentID = String(data.studentID || data.studentId || "").trim();
+  const year = resolveRequestYear_(data, session);
+  if (session && session.role === "teacher" && studentID) {
+    const enrollSheet = getEnrollmentSheet_(year, false);
+    if (enrollSheet) {
+      const eRows = enrollSheet.getDataRange().getValues();
+      const eIdx = findRowIndex(eRows, "StudentID", studentID);
+      if (eIdx >= 0) {
+        const eHeaders = eRows[0].map(function (h) { return String(h).trim(); });
+        const status = String(eRows[eIdx + 1][eHeaders.indexOf("Status")] || "").trim().toLowerCase();
+        if (HIDDEN_FROM_TEACHERS_STATUSES.indexOf(status) !== -1) {
+          return jsonResponse(false, "This student is no longer enrolled.");
+        }
+      }
+    }
+  }
+
   return jsonResponse(true, "Report generation ready.", {
-    studentID: data.studentID || data.studentId || "",
+    studentID: studentID,
   });
 }
 
@@ -1179,7 +1358,11 @@ function migrateLegacySchema() {
         masterExisting[sid.toLowerCase()] = true;
       }
       if (!enrollByYear[sYear]) enrollByYear[sYear] = [];
-      enrollByYear[sYear].push([sid, s.Class || "", "Active", sYear]);
+      // Convert legacy "Withdrawn" status to "Drop" (v2 rename)
+      var migratedStatus = String(s.Status || "").trim();
+      if (migratedStatus.toLowerCase() === "withdrawn") migratedStatus = "Drop";
+      if (!migratedStatus) migratedStatus = "Active";
+      enrollByYear[sYear].push([sid, s.Class || "", migratedStatus, sYear]);
     });
 
     if (newMasterRows.length) {

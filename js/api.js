@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbzL1FBm4YQnNcZEfMVVEFT7s_6ZIrPmEgMBduWybd72G_qjECU0TZrvkSZcRNb6uMuq/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbytHeedjAHoOaJQO8okqRbfaLOsz2xMslDkVMw8u4WhBRNgNj1LOWNHY5FpRoFsy-QB/exec';
 
 async function apiRequest(action, data = {}) {
   // Attach the signed-in user's session token to every call except login,
@@ -8,6 +8,13 @@ async function apiRequest(action, data = {}) {
   if (action !== 'login' && session && session.token) {
     payload.sessionToken = session.token;
   }
+
+  // Note: teachers do NOT need an academicYear sent here. The server always
+  // uses the year written on the teacher's own USERS profile
+  // (AssignedAcademicYear) for any teacher-role request, regardless of what
+  // this payload contains and regardless of SETTINGS!AcademicYear. Principal
+  // pages that need a specific year (e.g. viewing past records) should pass
+  // academicYear explicitly in `data`.
 
   // Send as form-encoded. Apps Script reads e.parameter reliably for all fields.
   // We also put the full JSON in a 'payload' param so the server can parse nested data.

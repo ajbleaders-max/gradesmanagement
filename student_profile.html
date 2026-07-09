@@ -1134,12 +1134,16 @@
             <div class="profile-field"><span class="field-label">Enrollment Date</span>
               <div class="field-value" id="studentEnrollmentDate"></div>
             </div>
+            <div class="profile-field"><span class="field-label">Status</span>
+              <div class="field-value" id="studentStatus"></div>
+            </div>
           </div>
           <div class="profile-actions">
             <button class="btn-secondary" id="backToHomeBtn" onclick="goBackHome()">← Back</button>
             <button class="btn-primary" onclick="printReport()" id="printReportBtn" style="display:none;">🖨️ Print
               Report</button>
             <button class="btn-primary" id="editProfileBtn" onclick="openEditProfile()">✏️ Edit Profile</button>
+            <button class="btn-primary" id="promoteStudentBtn" onclick="openPromoteModal()" style="display:none;">⬆️ Promote Student</button>
           </div>
         </div>
       </div>
@@ -1209,6 +1213,18 @@
               class="field-value" id="editAddress" type="text"
               style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" /></div>
         </div>
+        <div class="profile-row">
+          <div class="profile-field"><span class="field-label">Status</span>
+            <select class="field-value" id="editStatus"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e2e8f0;padding:12px 14px;border-radius:12px;min-height:44px;cursor:pointer;">
+              <option value="Active">Active</option>
+              <option value="Drop">Drop</option>
+              <option value="Graduated">Graduated</option>
+              <option value="Transferred">Transferred</option>
+              <option value="Suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
         <div class="profile-footer">
           <button class="btn-primary" onclick="saveProfileInfo()">💾 Save Profile</button>
           <button class="btn-secondary" onclick="cancelProfileEdit()">Cancel</button>
@@ -1218,6 +1234,39 @@
     </div>
 
     <div id="pageAlert" class="state-msg warn" style="display:none; margin-top:20px;"></div>
+
+    <!-- ── Promote Student Modal ── -->
+    <div class="modal-backdrop" id="promoteModal" style="display:none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">⬆️ Promote Student</h3>
+          <button class="modal-close" onclick="closePromoteModal()">✕</button>
+        </div>
+        <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:16px;">
+          Promote <strong id="promoteStudentName">this student</strong> to a new academic year.
+          Their current class carries over unless you change it below.
+        </p>
+        <div class="profile-row">
+          <div class="profile-field" style="flex:1 1 100%;">
+            <span class="field-label">Target Academic Year <span style="color:#ef4444;">*</span></span>
+            <input class="field-value" id="promoteToYear" type="text" placeholder="e.g. 2026-2027"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" />
+          </div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-field" style="flex:1 1 100%;">
+            <span class="field-label">New Class (leave blank to keep current)</span>
+            <input class="field-value" id="promoteNewClass" type="text" placeholder="e.g. Grade 4"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);" />
+          </div>
+        </div>
+        <div class="profile-footer" style="margin-top:18px;">
+          <button class="btn-primary" onclick="confirmPromoteStudent()">⬆️ Promote</button>
+          <button class="btn-secondary" onclick="closePromoteModal()">Cancel</button>
+        </div>
+        <div id="promoteMsg" class="state-msg info" style="display:none;margin-top:12px;"></div>
+      </div>
+    </div>
   </main>
 
   <script src="js/api.js"></script>
@@ -1277,11 +1326,13 @@
       var navReportCards = document.getElementById('navReportCards');
       var navGradeRecords = document.getElementById('navGradeRecords');
 
+      var promoteBtn = document.getElementById('promoteStudentBtn');
       if (!_profileEditable) {
         if (editBtn) editBtn.style.display = 'none';
         if (gradesBtn) gradesBtn.style.display = 'none';
         if (saveGradesBtn) saveGradesBtn.style.display = 'none';
         if (printBtn) printBtn.style.display = 'none';
+        if (promoteBtn) promoteBtn.style.display = 'none';
         if (profileEditPanel) profileEditPanel.style.display = 'none';
         if (navDashboard) navDashboard.style.display = 'none';
         if (navTeacher) navTeacher.style.display = '';
@@ -1293,6 +1344,7 @@
         if (gradesBtn) gradesBtn.style.display = '';
         if (saveGradesBtn) saveGradesBtn.style.display = '';
         if (printBtn) printBtn.style.display = '';
+        if (promoteBtn) promoteBtn.style.display = '';
         if (profileEditPanel) profileEditPanel.style.display = 'none';
         if (navDashboard) navDashboard.style.display = '';
         if (navTeacher) navTeacher.style.display = '';
@@ -1331,6 +1383,7 @@
       document.getElementById('studentParentPhone').textContent = student.ParentPhone || '—';
       document.getElementById('studentAddress').textContent = student.Address || '—';
       document.getElementById('studentEnrollmentDate').textContent = formatDateDisplay(student.EnrollmentDate || student['Enrollment Date'] || '');
+      document.getElementById('studentStatus').textContent = student.Status || 'Active';
 
       document.getElementById('editFullName').value = student.FullName || student.StudentName || '';
       document.getElementById('editGender').value = student.Gender || '';
@@ -1341,6 +1394,7 @@
       document.getElementById('editParentPhone').value = student.ParentPhone || '';
       document.getElementById('editAddress').value = student.Address || '';
       document.getElementById('editEnrollmentDate').value = dateToInputValue(student.EnrollmentDate || student['Enrollment Date'] || '');
+      document.getElementById('editStatus').value = student.Status || 'Active';
     }
 
     var PERIOD_RE = /^period\s*(\d+)$/i;
@@ -1762,6 +1816,7 @@
       var parentPhone = document.getElementById('editParentPhone').value.trim();
       var address = document.getElementById('editAddress').value.trim();
       var enrollmentDate = document.getElementById('editEnrollmentDate').value;
+      var newStatus = document.getElementById('editStatus').value;
       var msg = document.getElementById('editProfileMsg');
       msg.style.display = 'flex';
       msg.textContent = 'Saving profile…';
@@ -1781,15 +1836,30 @@
           enrollmentDate,
           requesterRole: session.role || '',
         });
-        if (result && result.ok) {
-          msg.textContent = 'Profile saved.';
-          msg.className = 'state-msg info';
-          await loadStudentProfile();
-          document.getElementById('profileEditPanel').style.display = 'none';
-        } else {
+        if (!result || !result.ok) {
           msg.textContent = result.message || 'Failed to save profile.';
           msg.className = 'state-msg warn';
+          return;
         }
+        // If status changed, update it separately via setStudentStatus
+        var oldStatus = (_student && _student.Status) || 'Active';
+        if (newStatus !== oldStatus) {
+          var statusResult = await apiRequest('setStudentStatus', {
+            studentID: _studentID,
+            status: newStatus,
+            academicYear: academicYear || _student.AcademicYear || '',
+          });
+          if (!statusResult || !statusResult.ok) {
+            msg.textContent = 'Profile saved, but status update failed: ' + (statusResult && statusResult.message ? statusResult.message : 'Unknown error');
+            msg.className = 'state-msg warn';
+            await loadStudentProfile();
+            return;
+          }
+        }
+        msg.textContent = 'Profile saved.';
+        msg.className = 'state-msg info';
+        await loadStudentProfile();
+        document.getElementById('profileEditPanel').style.display = 'none';
       } catch (e) {
         msg.textContent = 'Could not save profile.';
         msg.className = 'state-msg warn';
@@ -1887,6 +1957,56 @@
           btn.disabled = false;
         }
         setAlert('Could not save grades.', 'warn');
+      }
+    }
+
+    function openPromoteModal() {
+      if (!_profileEditable) return;
+      document.getElementById('promoteStudentName').textContent = _student ? (_student.FullName || _student.StudentName || 'this student') : 'this student';
+      document.getElementById('promoteToYear').value = '';
+      document.getElementById('promoteNewClass').value = '';
+      document.getElementById('promoteMsg').style.display = 'none';
+      document.getElementById('promoteModal').style.display = 'flex';
+    }
+
+    function closePromoteModal() {
+      document.getElementById('promoteModal').style.display = 'none';
+    }
+
+    async function confirmPromoteStudent() {
+      if (!_profileEditable || !_student) return;
+      var toYear = document.getElementById('promoteToYear').value.trim();
+      var newClass = document.getElementById('promoteNewClass').value.trim();
+      var msg = document.getElementById('promoteMsg');
+      if (!toYear) {
+        msg.style.display = 'flex';
+        msg.textContent = 'Target academic year is required.';
+        msg.className = 'state-msg warn';
+        return;
+      }
+      msg.style.display = 'flex';
+      msg.textContent = 'Promoting…';
+      msg.className = 'state-msg info';
+      try {
+        var result = await apiRequest('promoteStudent', {
+          studentID: _studentID,
+          toYear: toYear,
+          newClass: newClass,
+        });
+        if (result && result.ok) {
+          msg.textContent = 'Student promoted to ' + toYear + '.';
+          msg.className = 'state-msg info';
+          setTimeout(function () {
+            closePromoteModal();
+            loadStudentProfile();
+          }, 1500);
+        } else {
+          msg.textContent = result.message || 'Could not promote student.';
+          msg.className = 'state-msg warn';
+        }
+      } catch (e) {
+        msg.textContent = 'Could not promote student.';
+        msg.className = 'state-msg warn';
       }
     }
 

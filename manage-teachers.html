@@ -262,6 +262,12 @@
         reset when you promote students. If an assigned class label refers to a specific group of students rather than a grade
         level in general (e.g. a homeroom teacher who moves up with their class), update their Assigned Classes here after promoting.
       </p>
+      <p style="font-size:0.75rem; color:#64748b; margin:6px 0 0;">
+        <strong>Academic Year</strong> works differently: it does <em>not</em> carry over automatically, even after you start a new
+        academic year school-wide. A teacher keeps working in whatever year they're assigned here until you move them forward
+        yourself — so starting a new year, or checking old records elsewhere in the app, never interrupts a teacher who is
+        actively entering grades. Move each teacher forward individually, whenever they're actually ready.
+      </p>
     </div>
 
     <div class="page-grid">
@@ -289,6 +295,17 @@
           <div class="field-wrap">
             <span class="field-label">Assigned Subjects</span>
             <input class="field-input" id="teacherSubjects" type="text" placeholder="Math, English" />
+          </div>
+          <div class="field-wrap">
+            <span class="field-label">Academic Year <span style="color:#ef4444;">*</span></span>
+            <select class="field-input" id="teacherAcademicYear">
+              <option value="">Loading years…</option>
+            </select>
+            <p style="font-size:0.72rem; color:#64748b; margin:4px 0 0;">
+              The year this teacher can see students and enter grades for. Unlike Assigned Classes,
+              this does <strong>not</strong> follow the school's current year automatically — see the
+              note below the teacher list.
+            </p>
           </div>
           <div class="field-wrap">
             <span class="field-label">Phone Number</span>
@@ -355,6 +372,16 @@
         <div class="field-wrap">
           <span class="field-label">Assigned Subjects</span>
           <input class="field-input" id="editSubjects" type="text" placeholder="Math, English" />
+        </div>
+        <div class="field-wrap">
+          <span class="field-label">Academic Year</span>
+          <select class="field-input" id="editAcademicYear">
+            <option value="">Loading years…</option>
+          </select>
+          <p style="font-size:0.72rem; color:#64748b; margin:4px 0 0;">
+            Changes what this teacher can see and grade. Move them forward only when they're
+            actually ready to start entering grades for the new year.
+          </p>
         </div>
         <div class="field-wrap">
           <span class="field-label">Phone Number</span>

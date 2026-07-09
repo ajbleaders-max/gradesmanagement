@@ -294,7 +294,8 @@
         }
 
         document.getElementById('teacherGreeting').textContent = 'Welcome, ' + (t.FullName || username);
-        document.getElementById('teacherMeta').textContent = 'Role: Teacher  |  @' + username;
+        document.getElementById('teacherMeta').textContent = 'Role: Teacher  |  @' + username +
+          (result.academicYear ? '  |  Year: ' + result.academicYear : '');
 
         // Quote
         var fullName = getFullName(t.FullName || username);

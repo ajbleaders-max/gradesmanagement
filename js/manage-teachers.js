@@ -71,6 +71,8 @@ function buildTeacherRow(t, i) {
     : '<div class="t-avatar ' + avClass(i) + '">' + initials(name) + '</div>';
 
   var tags = '';
+  var year = String(t.AssignedAcademicYear || '').trim();
+  if (year) tags += '<span class="ttag" style="background:rgba(139,92,246,0.12);border-color:rgba(139,92,246,0.3);color:#c4b5fd;">📅 ' + year + '</span>';
   if (classes !== 'ALL') {
     classes.split(',').slice(0,3).forEach(function(c){ tags += '<span class="ttag ttag-blue">' + c.trim() + '</span>'; });
   } else {
@@ -162,6 +164,7 @@ window.submitAddTeacher = async function() {
   var password        = document.getElementById('teacherPassword').value;
   var assignedClasses = document.getElementById('teacherClasses').value.trim();
   var assignedSubjects = document.getElementById('teacherSubjects').value.trim();
+  var assignedAcademicYear = document.getElementById('teacherAcademicYear').value.trim();
   var phone           = document.getElementById('teacherPhone').value.trim();
   var status          = document.getElementById('teacherStatus').value;
   var photoLink       = document.getElementById('teacherPhoto').value.trim();
@@ -172,12 +175,17 @@ window.submitAddTeacher = async function() {
     msg.textContent = 'Full name, username, and password are required.';
     return;
   }
+  if (!assignedAcademicYear) {
+    msg.style.color = '#f87171';
+    msg.textContent = 'Please select an academic year for this teacher.';
+    return;
+  }
   msg.style.color = '#64748b';
   msg.textContent = 'Adding teacher…';
   var btn = document.getElementById('addTeacherBtn');
   btn.disabled = true;
 
-  var result = await apiRequest('addTeacher', { fullName, username, password, assignedClasses, assignedSubjects, phone, status, photoLink });
+  var result = await apiRequest('addTeacher', { fullName, username, password, assignedClasses, assignedSubjects, assignedAcademicYear, phone, status, photoLink });
   btn.disabled = false;
   if (result && result.ok) {
     msg.style.color = '#4ade80';
@@ -190,6 +198,7 @@ window.submitAddTeacher = async function() {
     document.getElementById('teacherPhone').value    = '';
     document.getElementById('teacherStatus').value   = 'active';
     document.getElementById('teacherPhoto').value    = '';
+    populateYearDropdown(document.getElementById('teacherAcademicYear'), _currentYear);
     showToast('Teacher added successfully.', 'ok');
     await loadTeachers();
   } else {
@@ -207,11 +216,22 @@ window.openEditModal = async function(username) {
   });
   if (!teacher) return;
 
+  if (!_availableYears.length) await refreshCurrentYearLabel();
+
   document.getElementById('editUsername').value = teacher.Username || '';
   document.getElementById('editFullName').value = teacher.FullName || '';
   document.getElementById('editPassword').value = '';
   document.getElementById('editClasses').value  = teacher.AssignedClasses  || '';
   document.getElementById('editSubjects').value = teacher.AssignedSubjects || '';
+  var teacherYear = String(teacher.AssignedAcademicYear || '').trim();
+  // Guard against a teacher whose assigned year fell out of the fetched
+  // list (e.g. its ENROLL_/GRADES_ sheets were deleted) - add it back so
+  // the dropdown doesn't silently jump to a different year than reality.
+  if (teacherYear && _availableYears.indexOf(teacherYear) === -1) {
+    _availableYears.push(teacherYear);
+    _availableYears.sort();
+  }
+  populateYearDropdown(document.getElementById('editAcademicYear'), teacherYear || _currentYear);
   document.getElementById('editPhone').value    = teacher.Phone || '';
   document.getElementById('editStatus').value   = String(teacher.Status || 'active').toLowerCase();
   document.getElementById('editPhoto').value    = teacher.PhotoLink || '';
@@ -230,6 +250,7 @@ window.saveTeacherEdit = async function() {
   var password        = document.getElementById('editPassword').value;
   var assignedClasses = document.getElementById('editClasses').value.trim();
   var assignedSubjects = document.getElementById('editSubjects').value.trim();
+  var assignedAcademicYear = document.getElementById('editAcademicYear').value.trim();
   var phone           = document.getElementById('editPhone').value.trim();
   var status          = document.getElementById('editStatus').value;
   var photoLink       = document.getElementById('editPhoto').value.trim();
@@ -237,7 +258,7 @@ window.saveTeacherEdit = async function() {
 
   msg.textContent = 'Saving changes…';
 
-  var payload = { username, fullName, assignedClasses, assignedSubjects, phone, status, photoLink };
+  var payload = { username, fullName, assignedClasses, assignedSubjects, assignedAcademicYear, phone, status, photoLink };
   if (password) payload.password = password;
 
   var result = await apiRequest('updateTeacher', payload);
@@ -277,15 +298,37 @@ window.confirmDeleteTeacher = async function() {
   await loadTeachers();
 };
 
-// ── Academic year label ───────────────────────────────────────────────────
+// ── Academic year label + dropdowns ─────────────────────────────────────
+
+var _availableYears = [];
+var _currentYear = '';
 
 async function refreshCurrentYearLabel() {
   var el = document.getElementById('currentYearLabel');
-  if (!el) return;
   try {
     var result = await apiRequest('listAcademicYears');
-    if (result && result.ok) el.textContent = result.current || '—';
+    if (result && result.ok) {
+      _currentYear = result.current || '';
+      _availableYears = (result.years || []).slice();
+      if (_currentYear && _availableYears.indexOf(_currentYear) === -1) _availableYears.push(_currentYear);
+      _availableYears.sort();
+      if (el) el.textContent = _currentYear || '—';
+      populateYearDropdown(document.getElementById('teacherAcademicYear'), _currentYear);
+      populateYearDropdown(document.getElementById('editAcademicYear'), '');
+    }
   } catch (e) { /* non-fatal */ }
+}
+
+// Fills a <select> with every known academic year. `selectValue`, if given,
+// is selected by default (used for the Add form, which should default to
+// the school's current year). The Edit modal instead sets its own value
+// per-teacher in openEditModal, so it's called with an empty selectValue.
+function populateYearDropdown(sel, selectValue) {
+  if (!sel) return;
+  sel.innerHTML = _availableYears.map(function (y) {
+    return '<option value="' + y + '">' + y + (y === _currentYear ? ' (current)' : '') + '</option>';
+  }).join('');
+  if (selectValue) sel.value = selectValue;
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────

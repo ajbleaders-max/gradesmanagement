@@ -64,7 +64,8 @@ function statusBadgeClass(status) {
   var s = String(status || 'active').toLowerCase();
   if (s === 'active') return 'stag stag-green';
   if (s === 'graduated') return 'stag stag-blue';
-  return 'stag stag-amber'; // withdrawn / transferred / suspended
+  if (s === 'drop') return 'stag stag-red';
+  return 'stag stag-amber'; // transferred / suspended
 }
 
 function buildStudentRow(s, i) {
@@ -297,7 +298,7 @@ window.closeDeleteStudentModal = function() {
 window.confirmDeleteStudent = async function() {
   if (!_pendingDeleteID) return;
   var studentID = _pendingDeleteID;
-  var status = (document.getElementById('statusChangeSelect') || {}).value || 'Withdrawn';
+  var status = (document.getElementById('statusChangeSelect') || {}).value || 'Drop';
   closeDeleteStudentModal();
   var result = await apiRequest('setStudentStatus', { studentID: studentID, status: status });
   if (result && result.ok) {
@@ -327,21 +328,7 @@ window.promptCreateYear = async function() {
   }
 };
 
-window.promptPromoteStudents = async function() {
-  var toYear = window.prompt('Promote all Active students to which academic year? (e.g. 2026-2027)\nMake sure this year exists first (use "Start New Academic Year" if not).');
-  if (!toYear) return;
-  var msg = document.getElementById('yearActionMessage');
-  msg.textContent = 'Promoting students to ' + toYear + '…';
-  var result = await apiRequest('promoteStudents', { toYear: toYear.trim() });
-  if (result && result.ok) {
-    msg.style.color = '#4ade80';
-    msg.textContent = result.message;
-    showToast(result.message, 'ok');
-  } else {
-    msg.style.color = '#f87171';
-    msg.textContent = (result && result.message) || 'Could not promote students.';
-  }
-};
+
 
 async function refreshCurrentYearLabel() {
   var el = document.getElementById('currentYearLabel');
