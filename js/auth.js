@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        setSession({ username: username, role: result.role || 'teacher', status: status });
+        setSession({ username: username, role: result.role || 'teacher', status: status, token: result.token });
         showLoginMsg('Login successful! Redirecting…', 'ok');
         if (result.role === 'principal') window.location.href = 'admin.html';
         else window.location.href = 'teacher.html';
@@ -77,8 +77,10 @@ function guardRoute(expectedRole) {
 }
 
 function logoutUser() {
-  clearSession();
-  window.location.href = 'login.html';
+  apiRequest('logout').catch(function () { /* ignore — we clear locally regardless */ }).then(function () {
+    clearSession();
+    window.location.href = 'login.html';
+  });
 }
 
 function getSessionStatus() {

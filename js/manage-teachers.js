@@ -277,9 +277,21 @@ window.confirmDeleteTeacher = async function() {
   await loadTeachers();
 };
 
+// ── Academic year label ───────────────────────────────────────────────────
+
+async function refreshCurrentYearLabel() {
+  var el = document.getElementById('currentYearLabel');
+  if (!el) return;
+  try {
+    var result = await apiRequest('listAcademicYears');
+    if (result && result.ok) el.textContent = result.current || '—';
+  } catch (e) { /* non-fatal */ }
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', function() {
   guardRoute('principal');
   loadTeachers();
+  refreshCurrentYearLabel();
 });

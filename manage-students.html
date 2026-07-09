@@ -112,6 +112,7 @@
     .stag-blue   { background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.3);  color:#93c5fd; }
     .stag-purple { background:rgba(124,58,237,0.14);border:1px solid rgba(124,58,237,0.28);color:#c4b5fd; }
     .stag-amber  { background:rgba(217,119,6,0.14); border:1px solid rgba(217,119,6,0.28); color:#fcd34d; }
+    .stag-green  { background:rgba(22,163,74,0.14);  border:1px solid rgba(22,163,74,0.3);  color:#86efac; }
 
     .s-actions { display:flex; gap:6px; flex-shrink:0; }
     .act-btn {
@@ -225,6 +226,20 @@
         <a class="nav-btn" href="reportcard.html">📄 Report Cards</a>
         <a class="nav-btn" href="grades_records.html">📝 Grade Records</a>
       </div>
+    </div>
+
+    <div class="dash-panel" style="margin-bottom:20px;">
+      <h2>🗓️ Academic Year</h2>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:0.82rem; color:#94a3b8;">Current year: <strong id="currentYearLabel" style="color:#e2e8f0;">—</strong></span>
+        <button class="nav-btn" onclick="promptCreateYear()">➕ Start New Academic Year</button>
+        <button class="nav-btn" onclick="promptPromoteStudents()">⬆️ Promote Active Students to New Year</button>
+      </div>
+      <p style="font-size:0.75rem; color:#64748b; margin:10px 0 0;">
+        Promoting copies every <strong>Active</strong> student from the current year into the year you choose, keeping their existing class
+        (adjust individual classes afterward from the list below). Nothing is deleted — past years stay exactly as they are.
+      </p>
+      <p class="modal-msg" id="yearActionMessage" style="margin-top:8px;"></p>
     </div>
 
     <div class="page-grid">
@@ -396,14 +411,24 @@
     </div>
   </div>
 
-  <!-- ── Delete Confirm Modal ── -->
+  <!-- ── Status Change Modal (replaces the old destructive Delete) ── -->
   <div class="modal-overlay" id="deleteStudentModal">
     <div class="confirm-box">
-      <div class="confirm-icon">⚠️</div>
-      <h3 class="confirm-title">Delete Student?</h3>
-      <p class="confirm-body">This will permanently remove <strong id="deleteStudentName">this student</strong> and all their records. This action <strong>cannot be undone.</strong></p>
+      <div class="confirm-icon">🔖</div>
+      <h3 class="confirm-title">Change Student Status</h3>
+      <p class="confirm-body">Update the status for <strong id="deleteStudentName">this student</strong> for the current academic year. Their record and grade history are kept — nothing is deleted.</p>
+      <div class="field-wrap" style="text-align:left; margin:12px 0;">
+        <span class="field-label">New Status</span>
+        <select class="field-input" id="statusChangeSelect">
+          <option value="Active">Active</option>
+          <option value="Withdrawn">Withdrawn</option>
+          <option value="Graduated">Graduated</option>
+          <option value="Transferred">Transferred</option>
+          <option value="Suspended">Suspended</option>
+        </select>
+      </div>
       <div class="confirm-footer">
-        <button class="confirm-del" onclick="confirmDeleteStudent()">🗑️ Yes, Delete</button>
+        <button class="confirm-del" onclick="confirmDeleteStudent()">💾 Save Status</button>
         <button class="confirm-cancel" onclick="closeDeleteStudentModal()">Cancel</button>
       </div>
     </div>
